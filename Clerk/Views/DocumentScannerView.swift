@@ -2,6 +2,8 @@ import SwiftUI
 
 struct DocumentScannerView: View {
     @StateObject private var viewModel = DocumentScannerViewModel()
+    @State private var showCornerEditor = false
+    @State private var imageToEdit: UIImage? = nil
 
     var body: some View {
         ZStack {
@@ -43,11 +45,40 @@ struct DocumentScannerView: View {
                     Image(uiImage: scannedImage)
                         .resizable()
                         .scaledToFit()
-                    Button("Dismiss") {
-                        viewModel.finalScannedImage = nil
+                    HStack {
+                        Button("Dismiss") {
+                            viewModel.finalScannedImage = nil
+                        }
+                        Spacer()
+                        Button("Edit Corners") {
+                            imageToEdit = scannedImage
+                            viewModel.finalScannedImage = nil
+                            showCornerEditor = true
+                        }
                     }
                     .padding()
                 }
+                .padding()
+            }
+        }
+
+        .sheet(isPresented: $showCornerEditor) {
+            if let image = imageToEdit {
+                CornerEditorView(
+                    originalImage: image,
+                    initialCorners: [
+                        CGPoint(x: 0, y: 0),
+                        CGPoint(x: image.size.width, y: 0),
+                        CGPoint(x: image.size.width, y: image.size.height),
+                        CGPoint(x: 0, y: image.size.height)
+                    ],
+                    onSave: { _ in
+                        showCornerEditor = false
+                    },
+                    onCancel: {
+                        showCornerEditor = false
+                    }
+                )
             }
         }
     }

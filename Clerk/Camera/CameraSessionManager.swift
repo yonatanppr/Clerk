@@ -8,6 +8,7 @@ final class CameraSessionManager: NSObject {
     private let photoOutput = AVCapturePhotoOutput()
     private var isTorchOn = false
     let framePublisher = PassthroughSubject<CMSampleBuffer, Never>()
+    private var photoCaptureProcessor: AVCapturePhotoCaptureDelegate?
 
 
     // A Combine PassthroughSubject or delegate pattern to emit each CMSampleBuffer
@@ -83,7 +84,12 @@ final class CameraSessionManager: NSObject {
     func capturePhoto(completion: @escaping (Result<Data, Error>) -> Void) {
         let settings = AVCapturePhotoSettings()
         settings.flashMode = isTorchOn ? .on : .off
-        photoOutput.capturePhoto(with: settings, delegate: PhotoCaptureProcessor(completion: completion))
+        let processor = PhotoCaptureProcessor { [weak self] result in
+            self?.photoCaptureProcessor = nil
+            completion(result)
+        }
+        self.photoCaptureProcessor = processor
+        photoOutput.capturePhoto(with: settings, delegate: processor)
     }
 }
 
