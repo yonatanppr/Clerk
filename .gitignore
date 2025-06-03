@@ -20,6 +20,7 @@ Icon?
 xcuserdata/
 *.xcuserstate
 *.xcscmblueprint
+UserInterfaceState.xcuserstate
 
 # Xcode workspace
 *.xcworkspace/xcuserdata/
