@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct ClerkApp: App {
@@ -6,5 +7,6 @@ struct ClerkApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: FolderItem.self)
     }
 }
