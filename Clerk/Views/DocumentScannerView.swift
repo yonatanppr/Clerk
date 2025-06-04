@@ -3,6 +3,7 @@ import SwiftUI
 struct DocumentScannerView: View {
     @StateObject private var viewModel = DocumentScannerViewModel()
     @State private var showCornerEditor = false
+    @Environment(\.dismiss) private var dismiss // Add dismiss environment action
     @State private var imageToEdit: UIImage? = nil
 
     var body: some View {
@@ -25,7 +26,7 @@ struct DocumentScannerView: View {
                     isCapturing: viewModel.isCapturing,
                     onCapture: { viewModel.captureDocument() },
                     onToggleTorch: { viewModel.toggleTorch() },
-                    onReturn: { /* Future: navigate back */ }
+                    onReturn: { dismiss() } // Call dismiss when onReturn is triggered
                 )
                 .padding(.bottom, 20)
             }

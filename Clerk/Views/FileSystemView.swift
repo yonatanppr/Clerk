@@ -22,6 +22,7 @@ struct FileSystemView: View {
 
     @State private var showingDeleteConfirmationAlert = false
     @State private var folderMarkedForDeletion: FolderItem?
+    @State private var isShowingScanner = false // State to control scanner presentation
 
 
     // Query for subfolders of the currentFolder or root folders if currentFolder is nil
@@ -76,8 +77,7 @@ struct FileSystemView: View {
                 HStack {
                     Spacer() // Centers the button horizontally
                     Button {
-                        // Action for the mock camera button
-                        print("Camera button tapped - (Not implemented yet)")
+                        isShowingScanner = true // Present the DocumentScannerView
                     } label: {
                         Image(systemName: "camera.fill") // Icon-only for a circular button
                             .font(.system(size: 28, weight: .medium))
@@ -139,8 +139,12 @@ struct FileSystemView: View {
         } message: { folderToDelete in
             Text("Are you sure you want to delete '\(folderToDelete.name)'? All its contents will also be deleted.")
         }
-
-
+        .fullScreenCover(isPresented: $isShowingScanner) {
+            // Present DocumentScannerView as a full-screen cover
+            // Potentially wrap in NavigationView if DocumentScannerView needs its own navigation bar
+            // For now, presenting it directly.
+            DocumentScannerView()
+        }
     }
 
     private func createFolder(name: String) {
