@@ -1,11 +1,5 @@
-//
-//  ClerkApp.swift
-//  Clerk
-//
-//  Created by Yonatan Pepper on 01.06.25.
-//
-
 import SwiftUI
+import SwiftData
 
 @main
 struct ClerkApp: App {
@@ -13,5 +7,6 @@ struct ClerkApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: FolderItem.self)
     }
 }
