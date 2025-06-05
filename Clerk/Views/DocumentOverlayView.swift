@@ -10,7 +10,7 @@ struct DocumentOverlayView: View {
                 Path { path in
                     // Map normalized points → actual view points
                     let pts = corners.map { CGPoint(x: $0.x * geo.size.width,
-                                                    y: $0.y * geo.size.height) }
+                                                    y: (1 - $0.y) * geo.size.height) }
                     path.move(to: pts[0])
                     path.addLine(to: pts[1])
                     path.addLine(to: pts[2])
@@ -24,7 +24,7 @@ struct DocumentOverlayView: View {
                         .mask(
                             Path { path in
                                 let pts = corners.map { CGPoint(x: $0.x * geo.size.width,
-                                                                y: $0.y * geo.size.height) }
+                                                                y: (1 - $0.y) * geo.size.height) }
                                 path.move(to: pts[0])
                                 path.addLine(to: pts[1])
                                 path.addLine(to: pts[2])

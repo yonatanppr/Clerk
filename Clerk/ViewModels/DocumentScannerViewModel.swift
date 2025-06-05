@@ -1,3 +1,4 @@
+import Vision
 import Foundation
 import UIKit
 import Combine
@@ -57,21 +58,43 @@ final class DocumentScannerViewModel: ObservableObject {
             DispatchQueue.global(qos: .userInitiated).async {
                 switch result {
                 case .success(let data):
-                    var scannedImage: UIImage? = nil
-                    if let corners = cornersToUse, corners.count == 4 {
-                        scannedImage = self?.processor.applyPerspectiveCorrection(to: data, with: corners)
-                    } else {
-                        scannedImage = UIImage(data: data) // fallback: no perspective correction
+                    guard let self = self,
+                          let image = UIImage(data: data),
+                          let cgImage = image.cgImage else {
+                        DispatchQueue.main.async { self?.isCapturing = false }
+                        return
                     }
-                    DispatchQueue.main.async {
-                        self?.finalScannedImage = scannedImage
-                        self?.isCapturing = false
+
+                    let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+                    let request = VNDetectRectanglesRequest { request, error in
+                        var scannedImage: UIImage? = nil
+
+                        defer {
+                            DispatchQueue.main.async {
+                                self.finalScannedImage = scannedImage
+                                self.isCapturing = false
+                            }
+                        }
+
+                        guard error == nil,
+                              let results = request.results as? [VNRectangleObservation],
+                              let rect = results.first else {
+                            scannedImage = image // fallback
+                            return
+                        }
+
+                        let corners = [rect.topLeft, rect.topRight, rect.bottomRight, rect.bottomLeft]
+                        scannedImage = self.processor.applyPerspectiveCorrection(to: data, with: corners)
                     }
+
+                    request.minimumAspectRatio = 0.3
+                    request.quadratureTolerance = 30.0
+
+                    try? handler.perform([request])
 
                 case .failure(_):
                     DispatchQueue.main.async {
                         self?.isCapturing = false
-                        // If desired, publish an error state
                     }
                 }
             }

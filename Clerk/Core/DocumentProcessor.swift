@@ -38,7 +38,7 @@ final class DocumentProcessor {
         // Convert normalized corners (0–1) to pixel coordinates
         let width = CGFloat(cgImage.width)
         let height = CGFloat(cgImage.height)
-        let pixelCorners = corners.map { CGPoint(x: $0.x * width, y: (1 - $0.y) * height) } // flip Y if needed
+        let pixelCorners = corners.map { CGPoint(x: $0.x * width, y: $0.y * height) }
 
         // Build a CIImage from cgImage
         let ciImage = CIImage(cgImage: cgImage)
