@@ -68,3 +68,4 @@ fastlane/test_output
 # Other
 *.orig
 *.rej
+Clerk.xcodeproj/project.xcworkspace/xcuserdata/
