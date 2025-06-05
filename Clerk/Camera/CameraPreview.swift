@@ -5,14 +5,14 @@ import AVFoundation
 struct CameraPreview: UIViewRepresentable {
     let session: AVCaptureSession
 
-    func makeUIView(context: Context) -> PreviewView {
-        let view = PreviewView()
+    func makeUIView(context: Context) -> CameraPreviewView {
+        let view = CameraPreviewView()
         view.videoPreviewLayer.session = session
         view.videoPreviewLayer.videoGravity = .resizeAspect
         return view
     }
 
-    func updateUIView(_ uiView: PreviewView, context: Context) {
+    func updateUIView(_ uiView: CameraPreviewView, context: Context) {
         // Keep orientation in sync
         if let connection = uiView.videoPreviewLayer.connection,
            connection.isVideoOrientationSupported {
@@ -22,7 +22,7 @@ struct CameraPreview: UIViewRepresentable {
 }
 
 /// A simple UIView subclass whose layer is AVCaptureVideoPreviewLayer
-final class PreviewView: UIView {
+final class CameraPreviewView: UIView {
     override class var layerClass: AnyClass {
         AVCaptureVideoPreviewLayer.self
     }

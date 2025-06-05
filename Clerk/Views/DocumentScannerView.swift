@@ -5,6 +5,7 @@ struct DocumentScannerView: View {
     @State private var showCornerEditor = false
     @Environment(\.dismiss) private var dismiss // Add dismiss environment action
     @State private var imageToEdit: UIImage? = nil
+    let onSave: (Data) -> Void
 
     var body: some View {
         ZStack {
@@ -51,6 +52,13 @@ struct DocumentScannerView: View {
                             viewModel.finalScannedImage = nil
                         }
                         Spacer()
+                        Button("Save") {
+                            if let imageData = scannedImage.jpegData(compressionQuality: 0.8) {
+                                onSave(imageData)
+                                dismiss()
+                            }
+                        }
+                        Spacer()
                         Button("Edit Corners") {
                             imageToEdit = scannedImage
                             viewModel.finalScannedImage = nil
@@ -73,7 +81,12 @@ struct DocumentScannerView: View {
                         CGPoint(x: image.size.width, y: image.size.height),
                         CGPoint(x: 0, y: image.size.height)
                     ],
-                    onSave: { _ in
+                    onSave: { corners in
+                        if let correctedImage = applyCorrection(to: image, with: corners),
+                           let imageData = correctedImage.jpegData(compressionQuality: 0.8) {
+                            onSave(imageData)
+                            dismiss()
+                        }
                         showCornerEditor = false
                     },
                     onCancel: {
@@ -82,5 +95,28 @@ struct DocumentScannerView: View {
                 )
             }
         }
+    }
+    
+    private func applyCorrection(to image: UIImage, with corners: [CGPoint]) -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+        
+        let ciImage = CIImage(cgImage: cgImage)
+        guard let filter = CIFilter(name: "CIPerspectiveCorrection") else { return nil }
+        
+        let imgSize = image.size
+        let pts = corners.map { CGPoint(x: $0.x, y: imgSize.height - $0.y) }
+        
+        filter.setValue(ciImage, forKey: kCIInputImageKey)
+        filter.setValue(CIVector(cgPoint: pts[0]), forKey: "inputTopLeft")
+        filter.setValue(CIVector(cgPoint: pts[1]), forKey: "inputTopRight")
+        filter.setValue(CIVector(cgPoint: pts[2]), forKey: "inputBottomRight")
+        filter.setValue(CIVector(cgPoint: pts[3]), forKey: "inputBottomLeft")
+        
+        guard let outputCI = filter.outputImage else { return nil }
+        let context = CIContext()
+        if let outputCG = context.createCGImage(outputCI, from: outputCI.extent) {
+            return UIImage(cgImage: outputCG, scale: image.scale, orientation: image.imageOrientation)
+        }
+        return nil
     }
 }

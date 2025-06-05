@@ -8,105 +8,277 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Folder Row View
+struct FolderRowView: View {
+    let folder: FolderItem
+    let onRename: (FolderItem) -> Void
+    let onDelete: (FolderItem) -> Void
+    
+    var body: some View {
+        NavigationLink(value: folder) {
+            HStack {
+                Image(systemName: "folder")
+                Text(folder.name)
+            }
+        }
+        .contextMenu {
+            Button("Rename") {
+                onRename(folder)
+            }
+            Button("Delete", role: .destructive) {
+                onDelete(folder)
+            }
+        }
+    }
+}
+
+// MARK: - Document Row View
+struct DocumentRowView: View {
+    let document: DocumentItem
+    let onSelect: (DocumentItem) -> Void
+    let onDelete: (DocumentItem) -> Void
+    
+    var body: some View {
+        Button {
+            onSelect(document)
+        } label: {
+            HStack {
+                Image(systemName: "doc.text")
+                Text(document.name)
+            }
+        }
+        .contextMenu {
+            Button("Delete", role: .destructive) {
+                onDelete(document)
+            }
+        }
+    }
+}
+
+// MARK: - Scan Button View
+struct ScanButtonView: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "camera.fill")
+                .font(.system(size: 28, weight: .medium))
+                .frame(width: 60, height: 60)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .clipShape(Circle())
+                .shadow(color: .gray.opacity(0.6), radius: 8, x: 0, y: 4)
+        }
+        .accessibilityLabel("Scan new document")
+    }
+}
+
+// MARK: - File List Content View
+struct FileListContentView: View {
+    let folders: [FolderItem]
+    let documents: [DocumentItem]
+    let onFolderRename: (FolderItem) -> Void
+    let onFolderDelete: (FolderItem) -> Void
+    let onDocumentSelect: (DocumentItem) -> Void
+    let onDocumentDelete: (DocumentItem) -> Void
+    let onFoldersDelete: (IndexSet) -> Void
+    let onDocumentsDelete: (IndexSet) -> Void
+    
+    var body: some View {
+        List {
+            Section("Folders") {
+                ForEach(folders) { folder in
+                    FolderRowView(
+                        folder: folder,
+                        onRename: onFolderRename,
+                        onDelete: onFolderDelete
+                    )
+                }
+                .onDelete(perform: onFoldersDelete)
+            }
+            
+            Section("Documents") {
+                ForEach(documents) { document in
+                    DocumentRowView(
+                        document: document,
+                        onSelect: onDocumentSelect,
+                        onDelete: onDocumentDelete
+                    )
+                }
+                .onDelete(perform: onDocumentsDelete)
+            }
+        }
+    }
+}
+
+// MARK: - Alert Modifiers View
+struct AlertModifiersView: ViewModifier {
+    @Binding var showingCreateFolderAlert: Bool
+    @Binding var newFolderName: String
+    let onCreateFolder: (String) -> Void
+    @Binding var showingRenameFolderAlert: Bool
+    @Binding var renamedFolderName: String
+    let folderToRename: FolderItem?
+    let onRenameFolder: (FolderItem, String) -> Void
+    @Binding var showingDeleteConfirmationAlert: Bool
+    let folderMarkedForDeletion: FolderItem?
+    let onDeleteFolder: (FolderItem) -> Void
+    
+    func body(content: Content) -> some View {
+        content
+            .alert("New Folder", isPresented: $showingCreateFolderAlert) {
+                TextField("Folder Name", text: $newFolderName)
+                Button("Create") {
+                    onCreateFolder(newFolderName)
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Enter a name for the new folder.")
+            }
+            .alert("Rename Folder", isPresented: $showingRenameFolderAlert) {
+                TextField("New Name", text: $renamedFolderName)
+                Button("Rename") {
+                    if let folder = folderToRename {
+                        onRenameFolder(folder, renamedFolderName)
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Enter the new name for '\(folderToRename?.name ?? "")'.")
+            }
+            .alert("Confirm Deletion", isPresented: $showingDeleteConfirmationAlert, presenting: folderMarkedForDeletion) { folderToDelete in
+                Button("Delete", role: .destructive) {
+                    onDeleteFolder(folderToDelete)
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { folderToDelete in
+                Text("Are you sure you want to delete '\(folderToDelete.name)'? All its contents will also be deleted.")
+            }
+    }
+}
+
+// MARK: - View Extension
+extension View {
+    func alertModifiers(
+        showingCreateFolderAlert: Binding<Bool>,
+        newFolderName: Binding<String>,
+        onCreateFolder: @escaping (String) -> Void,
+        showingRenameFolderAlert: Binding<Bool>,
+        renamedFolderName: Binding<String>,
+        folderToRename: FolderItem?,
+        onRenameFolder: @escaping (FolderItem, String) -> Void,
+        showingDeleteConfirmationAlert: Binding<Bool>,
+        folderMarkedForDeletion: FolderItem?,
+        onDeleteFolder: @escaping (FolderItem) -> Void
+    ) -> some View {
+        self.modifier(AlertModifiersView(
+            showingCreateFolderAlert: showingCreateFolderAlert,
+            newFolderName: newFolderName,
+            onCreateFolder: onCreateFolder,
+            showingRenameFolderAlert: showingRenameFolderAlert,
+            renamedFolderName: renamedFolderName,
+            folderToRename: folderToRename,
+            onRenameFolder: onRenameFolder,
+            showingDeleteConfirmationAlert: showingDeleteConfirmationAlert,
+            folderMarkedForDeletion: folderMarkedForDeletion,
+            onDeleteFolder: onDeleteFolder
+        ))
+    }
+}
+
+// MARK: - Main FileSystemView
 struct FileSystemView: View {
     @Environment(\.modelContext) private var modelContext
-    let currentFolder: FolderItem? // The folder whose contents are being displayed, nil for root
+    let currentFolder: FolderItem?
 
     // State for managing alerts
     @State private var showingCreateFolderAlert = false
     @State private var newFolderName = ""
-
     @State private var showingRenameFolderAlert = false
     @State private var folderToRename: FolderItem?
     @State private var renamedFolderName = ""
-
     @State private var showingDeleteConfirmationAlert = false
     @State private var folderMarkedForDeletion: FolderItem?
-    @State private var isShowingScanner = false // State to control scanner presentation
+    @State private var isShowingScanner = false
+    @State private var selectedDocument: DocumentItem? = nil
+    @State private var showingDocumentPreview = false
 
-
-    // Query for subfolders of the currentFolder or root folders if currentFolder is nil
-    @Query var items: [FolderItem]
+    // Query for subfolders and documents
+    @Query private var folders: [FolderItem]
+    @Query private var documents: [DocumentItem]
 
     init(currentFolder: FolderItem?) {
         self.currentFolder = currentFolder
         
         if let currentFolder {
             let currentFolderID = currentFolder.persistentModelID
-            // Fetch subfolders of the given currentFolder
-            self._items = Query(filter: #Predicate<FolderItem> { folderItem in
+            self._folders = Query(filter: #Predicate<FolderItem> { folderItem in
                 folderItem.parent?.persistentModelID == currentFolderID
             }, sort: [SortDescriptor(\FolderItem.name)])
+            
+            self._documents = Query(filter: #Predicate<DocumentItem> { document in
+                document.parent?.persistentModelID == currentFolderID
+            }, sort: [SortDescriptor(\DocumentItem.name)])
         } else {
-            // Fetch root folders (those with no parent)
-            self._items = Query(filter: #Predicate<FolderItem> { folderItem in
+            self._folders = Query(filter: #Predicate<FolderItem> { folderItem in
                 folderItem.parent == nil
             }, sort: [SortDescriptor(\FolderItem.name)])
+            
+            self._documents = Query(filter: #Predicate<DocumentItem> { document in
+                document.parent == nil
+            }, sort: [SortDescriptor(\DocumentItem.name)])
         }
     }
 
     var body: some View {
         ZStack {
-            // Layer 1: The List of folders
-            List {
-                ForEach(items) { folder in
-                    NavigationLink(value: folder) { // Navigate to the selected folder
-                        HStack {
-                            Image(systemName: "folder")
-                            Text(folder.name)
-                        }
-                    }
-                    .contextMenu { // Options for each folder
-                        Button("Rename") {
-                            folderToRename = folder
-                            renamedFolderName = folder.name
-                            showingRenameFolderAlert = true
-                        }
-                        Button("Delete", role: .destructive) {
-                            requestDeleteConfirmation(for: folder)
-                        }
-                    }
-                }
-                .onDelete(perform: deleteFoldersAtIndexSet) // Swipe to delete
-            }
+            FileListContentView(
+                folders: folders,
+                documents: documents,
+                onFolderRename: handleRename,
+                onFolderDelete: requestDeleteConfirmation,
+                onDocumentSelect: { selectedDocument = $0; showingDocumentPreview = true },
+                onDocumentDelete: deleteDocument,
+                onFoldersDelete: deleteFoldersAtIndexSet,
+                onDocumentsDelete: deleteDocumentsAtIndexSet
+            )
 
-            // Layer 2: The "Scan Document" Button
             VStack {
-                Spacer() // Pushes the button towards the bottom
-
+                Spacer()
                 HStack {
-                    Spacer() // Centers the button horizontally
-                    Button {
-                        isShowingScanner = true // Present the DocumentScannerView
-                    } label: {
-                        Image(systemName: "camera.fill") // Icon-only for a circular button
-                            .font(.system(size: 28, weight: .medium))
-                            .frame(width: 60, height: 60) // Define a fixed size for the circle
-                            .background(Color.blue)       // Prominent background color
-                            .foregroundColor(.white)       // Icon color
-                            .clipShape(Circle())           // Make it circular
-                            .shadow(color: .gray.opacity(0.6), radius: 8, x: 0, y: 4) // Add a shadow for depth
-                    }
-                    .accessibilityLabel("Scan new document") // For accessibility
-                    Spacer() // Centers the button horizontally
+                    Spacer()
+                    ScanButtonView(action: { isShowingScanner = true })
+                    Spacer()
                 }
-                .padding(.bottom, 40) // Adjust this padding to position in the "bottom quarter"
+                .padding(.bottom, 40)
             }
-            .ignoresSafeArea(.keyboard) // Ensures the button isn't affected by the keyboard appearing
+            .ignoresSafeArea(.keyboard)
         }
         .navigationTitle(currentFolder?.name ?? "Clerk")
-        .toolbar { // Toolbar for other items, like "Create Folder"
+        .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                // The "Create Folder" button remains in the toolbar
                 Button {
-                    newFolderName = "" // Clear previous input
+                    newFolderName = ""
                     showingCreateFolderAlert = true
                 } label: {
                     Label("Create Folder", systemImage: "plus.circle.fill")
                 }
             }
         }
-        .alert("New Folder", isPresented: $showingCreateFolderAlert) { // Alerts remain attached
+        .navigationDestination(for: FolderItem.self) { folder in
+            FileSystemView(currentFolder: folder)
+        }
+        .fullScreenCover(isPresented: $isShowingScanner) {
+            DocumentScannerView(onSave: { imageData in
+                saveScannedDocument(imageData: imageData)
+            })
+        }
+        .sheet(isPresented: $showingDocumentPreview) {
+            if let document = selectedDocument {
+                DocumentPreviewView(document: document)
+            }
+        }
+        .alert("New Folder", isPresented: $showingCreateFolderAlert) {
             TextField("Folder Name", text: $newFolderName)
             Button("Create") {
                 createFolder(name: newFolderName)
@@ -126,11 +298,6 @@ struct FileSystemView: View {
         } message: {
             Text("Enter the new name for '\(folderToRename?.name ?? "")'.")
         }
-        // This handles navigation to sub-folders.
-        // When a FolderItem is selected, a new FileSystemView is pushed for that folder.
-        .navigationDestination(for: FolderItem.self) { folder in
-            FileSystemView(currentFolder: folder)
-        }
         .alert("Confirm Deletion", isPresented: $showingDeleteConfirmationAlert, presenting: folderMarkedForDeletion) { folderToDelete in
             Button("Delete", role: .destructive) {
                 performDelete(folder: folderToDelete)
@@ -139,12 +306,12 @@ struct FileSystemView: View {
         } message: { folderToDelete in
             Text("Are you sure you want to delete '\(folderToDelete.name)'? All its contents will also be deleted.")
         }
-        .fullScreenCover(isPresented: $isShowingScanner) {
-            // Present DocumentScannerView as a full-screen cover
-            // Potentially wrap in NavigationView if DocumentScannerView needs its own navigation bar
-            // For now, presenting it directly.
-            DocumentScannerView()
-        }
+    }
+
+    private func handleRename(_ folder: FolderItem) {
+        folderToRename = folder
+        renamedFolderName = folder.name
+        showingRenameFolderAlert = true
     }
 
     private func createFolder(name: String) {
@@ -152,9 +319,8 @@ struct FileSystemView: View {
         let newFolder = FolderItem(name: name, parent: currentFolder)
         modelContext.insert(newFolder)
         do {
-            try modelContext.save() // Explicitly save the context
+            try modelContext.save()
         } catch {
-            // In a production app, you might want to show an alert to the user
             print("Failed to save new folder: \(error.localizedDescription)")
         }
     }
@@ -162,7 +328,6 @@ struct FileSystemView: View {
     private func renameFolder(_ folder: FolderItem, newName: String) {
         guard !newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         folder.name = newName
-        // SwiftData automatically saves changes to managed objects.
     }
 
     private func requestDeleteConfirmation(for folder: FolderItem) {
@@ -171,14 +336,60 @@ struct FileSystemView: View {
     }
 
     private func performDelete(folder: FolderItem) {
-        modelContext.delete(folder) // Cascade delete will handle subfolders
-        // Optionally, add error handling with try? modelContext.save() if experiencing issues
+        modelContext.delete(folder)
     }
 
     private func deleteFoldersAtIndexSet(offsets: IndexSet) {
-        // Standard swipe-to-delete usually acts on one item.
-        // If multiple were possible, a different confirmation strategy might be needed.
-        offsets.map { items[$0] }.forEach(requestDeleteConfirmation)
+        offsets.map { folders[$0] }.forEach(requestDeleteConfirmation)
+    }
+    
+    private func deleteDocumentsAtIndexSet(offsets: IndexSet) {
+        offsets.map { documents[$0] }.forEach { document in
+            deleteDocument(document)
+        }
+    }
+    
+    private func deleteDocument(_ document: DocumentItem) {
+        modelContext.delete(document)
+    }
+    
+    private func saveScannedDocument(imageData: Data) {
+        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+        let documentName = "Scan \(timestamp)"
+        let document = DocumentItem(name: documentName, imageData: imageData, parent: currentFolder)
+        modelContext.insert(document)
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to save document: \(error.localizedDescription)")
+        }
+    }
+}
+
+// MARK: - Document Preview View
+struct DocumentPreviewView: View {
+    let document: DocumentItem
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            VStack {
+                if let image = UIImage(data: document.imageData) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                }
+            }
+            .navigationTitle(document.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
