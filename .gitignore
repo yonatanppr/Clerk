@@ -23,6 +23,8 @@ xcuserdata/
 
 # Xcode workspace
 *.xcworkspace/xcuserdata/
+Clerk.xcodeproj/project.xcworkspace/xcuserdata/
+Clerk.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
 DerivedData/
 .idea/
 *.xcsettings
@@ -68,4 +70,3 @@ fastlane/test_output
 # Other
 *.orig
 *.rej
-Clerk.xcodeproj/project.xcworkspace/xcuserdata/
