@@ -51,52 +51,20 @@ final class DocumentScannerViewModel: ObservableObject {
         guard !isCapturing else { return }
         isCapturing = true
 
-        // Freeze the last known corners
         let cornersToUse = detectedCorners
 
         cameraManager.capturePhoto { [weak self] result in
-            DispatchQueue.global(qos: .userInitiated).async {
-                switch result {
-                case .success(let data):
-                    guard let self = self,
-                          let image = UIImage(data: data),
-                          let cgImage = image.cgImage else {
-                        DispatchQueue.main.async { self?.isCapturing = false }
-                        return
-                    }
-
-                    let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-                    let request = VNDetectRectanglesRequest { request, error in
-                        var scannedImage: UIImage? = nil
-
-                        defer {
-                            DispatchQueue.main.async {
-                                self.finalScannedImage = scannedImage
-                                self.isCapturing = false
-                            }
-                        }
-
-                        guard error == nil,
-                              let results = request.results as? [VNRectangleObservation],
-                              let rect = results.first else {
-                            scannedImage = image // fallback
-                            return
-                        }
-
-                        let corners = [rect.topLeft, rect.topRight, rect.bottomRight, rect.bottomLeft]
-                        scannedImage = self.processor.applyPerspectiveCorrection(to: data, with: corners)
-                    }
-
-                    request.minimumAspectRatio = 0.3
-                    request.quadratureTolerance = 30.0
-
-                    try? handler.perform([request])
-
-                case .failure(_):
+            guard let self = self else { return }
+            switch result {
+            case .success(let data):
+                self.processor.processCapturedPhoto(data, using: cornersToUse) { image in
                     DispatchQueue.main.async {
-                        self?.isCapturing = false
+                        self.finalScannedImage = image
+                        self.isCapturing = false
                     }
                 }
+            case .failure:
+                DispatchQueue.main.async { self.isCapturing = false }
             }
         }
     }

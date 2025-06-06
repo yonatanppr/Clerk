@@ -17,36 +17,42 @@ final class DocumentProcessor {
     /// Detect document rectangle in a video frame with enhanced accuracy
     func detectDocument(in pixelBuffer: CVPixelBuffer,
                        completion: @escaping ([CGPoint]?) -> Void) {
-        let request = VNDetectRectanglesRequest { [weak self] request, error in
-            guard let self = self,
-                  error == nil,
-                  let observations = request.results as? [VNRectangleObservation],
-                  let rect = observations.first else {
-                completion(nil)
-                return
-            }
-            
-            // Apply additional validation
-            guard self.isValidDocument(rect) else {
-                completion(nil)
-                return
-            }
-            
-            // Get corners and apply smoothing
-            let corners = [rect.topLeft, rect.topRight, rect.bottomRight, rect.bottomLeft]
-            let smoothedCorners = self.smoothCorners(corners)
-            completion(smoothedCorners)
-        }
-        
-        // Configure request parameters for better accuracy
-        request.minimumAspectRatio = Float(minimumAspectRatio)
-        request.maximumAspectRatio = Float(maximumAspectRatio)
-        request.quadratureTolerance = Float(quadratureTolerance)
-        request.minimumSize = Float(minimumSize)
-        
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .up, options: [:])
-        visionQueue.async {
-            try? handler.perform([request])
+        performDetection(with: handler, completion: completion)
+    }
+
+    /// Detect document rectangle in a still image
+    func detectDocument(in cgImage: CGImage,
+                        completion: @escaping ([CGPoint]?) -> Void) {
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        performDetection(with: handler, completion: completion)
+    }
+
+    /// Process a captured photo. If corners are provided they are used for
+    /// perspective correction, otherwise the document is detected first.
+    func processCapturedPhoto(_ data: Data,
+                              using corners: [CGPoint]?,
+                              completion: @escaping (UIImage?) -> Void) {
+        if let corners, corners.count == 4 {
+            completion(applyPerspectiveCorrection(to: data, with: corners))
+            return
+        }
+
+        guard let image = UIImage(data: data), let cgImage = image.cgImage else {
+            completion(nil)
+            return
+        }
+
+        detectDocument(in: cgImage) { [weak self] detected in
+            guard let self = self else {
+                completion(nil)
+                return
+            }
+            if let corners = detected {
+                completion(self.applyPerspectiveCorrection(to: data, with: corners))
+            } else {
+                completion(image)
+            }
         }
     }
     
@@ -104,6 +110,32 @@ final class DocumentProcessor {
                 x: corner.x * (1 - smoothingFactor) + corner.x * smoothingFactor,
                 y: corner.y * (1 - smoothingFactor) + corner.y * smoothingFactor
             )
+        }
+    }
+
+    private func performDetection(with handler: VNImageRequestHandler,
+                                  completion: @escaping ([CGPoint]?) -> Void) {
+        let request = VNDetectRectanglesRequest { [weak self] request, error in
+            guard let self = self,
+                  error == nil,
+                  let observations = request.results as? [VNRectangleObservation],
+                  let rect = observations.first,
+                  self.isValidDocument(rect) else {
+                completion(nil)
+                return
+            }
+
+            let corners = [rect.topLeft, rect.topRight, rect.bottomRight, rect.bottomLeft]
+            completion(self.smoothCorners(corners))
+        }
+
+        request.minimumAspectRatio = Float(minimumAspectRatio)
+        request.maximumAspectRatio = Float(maximumAspectRatio)
+        request.quadratureTolerance = Float(quadratureTolerance)
+        request.minimumSize = Float(minimumSize)
+
+        visionQueue.async {
+            try? handler.perform([request])
         }
     }
     
