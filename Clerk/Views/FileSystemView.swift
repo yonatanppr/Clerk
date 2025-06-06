@@ -1,12 +1,7 @@
-//
-//  FileSystemView.swift
-//  Clerk
-//
-//  Created by Yonatan Pepper on 01.06.25.
-//
-
+import PDFKit
 import SwiftUI
 import SwiftData
+import DocumentScannerView
 
 struct FileSystemView: View {
     @Environment(\.modelContext) private var modelContext
@@ -24,50 +19,103 @@ struct FileSystemView: View {
     @State private var folderMarkedForDeletion: FolderItem?
     @State private var isShowingScanner = false // State to control scanner presentation
 
+    // MARK: - Save Scans as PDF
+    private func saveScansAsPDF(_ images: [UIImage]) {
+        guard !images.isEmpty else { return }
+        let pdfData = NSMutableData()
+        let pdfConsumer = CGDataConsumer(data: pdfData as CFMutableData)!
+
+        // Use first image size as the PDF page size, or default to standard if unavailable
+        var mediaBox = CGRect(x: 0, y: 0, width: 612, height: 792)
+        guard let pdfContext = CGContext(consumer: pdfConsumer, mediaBox: &mediaBox, nil) else { return }
+
+        for image in images {
+            let pageSize = CGRect(origin: .zero, size: image.size)
+            var pageMediaBox = pageSize
+            pdfContext.beginPage(mediaBox: &pageMediaBox)
+            if let cgImage = image.cgImage {
+                pdfContext.draw(cgImage, in: pageSize)
+            }
+            pdfContext.endPage()
+        }
+        pdfContext.closePDF()
+
+        let filename = "Scan_\(Int(Date().timeIntervalSince1970)).pdf"
+        let documentsFolder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fileURL = documentsFolder.appendingPathComponent(filename)
+        pdfData.write(to: fileURL, atomically: true)
+
+        let newFile = FileItem(name: filename, url: fileURL, parent: currentFolder)
+        modelContext.insert(newFile)
+
+        do {
+            try modelContext.save()
+            print("Successfully saved file '\(filename)' to folder: \(currentFolder?.name ?? "root")")
+            print("File saved at path: \(fileURL.path)")
+        } catch {
+            print("Failed to save FileItem: \(error.localizedDescription)")
+        }
+    }
+
 
     // Query for subfolders of the currentFolder or root folders if currentFolder is nil
     @Query var items: [FolderItem]
+    @Query var files: [FileItem]
 
     init(currentFolder: FolderItem?) {
         self.currentFolder = currentFolder
-        
+
         if let currentFolder {
             let currentFolderID = currentFolder.persistentModelID
-            // Fetch subfolders of the given currentFolder
             self._items = Query(filter: #Predicate<FolderItem> { folderItem in
                 folderItem.parent?.persistentModelID == currentFolderID
             }, sort: [SortDescriptor(\FolderItem.name)])
+            self._files = Query(filter: #Predicate<FileItem> { fileItem in
+                fileItem.parent?.persistentModelID == currentFolderID
+            }, sort: [SortDescriptor(\FileItem.name)])
         } else {
-            // Fetch root folders (those with no parent)
             self._items = Query(filter: #Predicate<FolderItem> { folderItem in
                 folderItem.parent == nil
             }, sort: [SortDescriptor(\FolderItem.name)])
+            self._files = Query(filter: #Predicate<FileItem> { fileItem in
+                fileItem.parent == nil
+            }, sort: [SortDescriptor(\FileItem.name)])
         }
     }
 
     var body: some View {
         ZStack {
-            // Layer 1: The List of folders
+            // Layer 1: The List of folders and files
             List {
-                ForEach(items) { folder in
-                    NavigationLink(value: folder) { // Navigate to the selected folder
-                        HStack {
-                            Image(systemName: "folder")
-                            Text(folder.name)
+                Section(header: Text("Folders")) {
+                    ForEach(items) { folder in
+                        NavigationLink(value: folder) { // Navigate to the selected folder
+                            HStack {
+                                Image(systemName: "folder")
+                                Text(folder.name)
+                            }
+                        }
+                        .contextMenu { // Options for each folder
+                            Button("Rename") {
+                                folderToRename = folder
+                                renamedFolderName = folder.name
+                                showingRenameFolderAlert = true
+                            }
+                            Button("Delete", role: .destructive) {
+                                requestDeleteConfirmation(for: folder)
+                            }
                         }
                     }
-                    .contextMenu { // Options for each folder
-                        Button("Rename") {
-                            folderToRename = folder
-                            renamedFolderName = folder.name
-                            showingRenameFolderAlert = true
-                        }
-                        Button("Delete", role: .destructive) {
-                            requestDeleteConfirmation(for: folder)
+                    .onDelete(perform: deleteFoldersAtIndexSet) // Swipe to delete
+                }
+                Section(header: Text("Files")) {
+                    ForEach(files) { file in
+                        HStack {
+                            Image(systemName: "doc.richtext")
+                            Text(file.name)
                         }
                     }
                 }
-                .onDelete(perform: deleteFoldersAtIndexSet) // Swipe to delete
             }
 
             // Layer 2: The "Scan Document" Button
@@ -139,11 +187,16 @@ struct FileSystemView: View {
         } message: { folderToDelete in
             Text("Are you sure you want to delete '\(folderToDelete.name)'? All its contents will also be deleted.")
         }
-        .fullScreenCover(isPresented: $isShowingScanner) {
-            // Present DocumentScannerView as a full-screen cover
-            // Potentially wrap in NavigationView if DocumentScannerView needs its own navigation bar
-            // For now, presenting it directly.
-            DocumentScannerView()
+        // Sheet for DocumentScannerView
+        .sheet(isPresented: $isShowingScanner) {
+            DocumentScannerView { result in
+                switch result {
+                case .success(let scannedImages):
+                    saveScansAsPDF(scannedImages)
+                case .failure(let error):
+                    print("Scan failed: \(error.localizedDescription)")
+                }
+            }
         }
     }
 

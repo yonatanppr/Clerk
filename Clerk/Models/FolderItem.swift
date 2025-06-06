@@ -5,6 +5,9 @@ import Foundation
 final class FolderItem {
     var name: String
     var creationDate: Date
+    
+    @Relationship(deleteRule: .cascade, inverse: \FileItem.parent)
+    var files: [FileItem] = []
 
     // Relationship to parent folder
     var parent: FolderItem?
