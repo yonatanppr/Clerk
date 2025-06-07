@@ -3,6 +3,7 @@ import SwiftData
 
 struct FileRowView: View {
     let file: FileItem
+    let isSelected: Bool
     let onTap: () -> Void
     @Environment(\.modelContext) private var modelContext
     @State private var showingDeleteConfirmation = false
@@ -10,6 +11,10 @@ struct FileRowView: View {
     var body: some View {
         Button(action: onTap) {
             HStack {
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.blue)
+                }
                 Image(systemName: "doc.richtext")
                     .foregroundColor(.blue)
                 Text(file.name)
