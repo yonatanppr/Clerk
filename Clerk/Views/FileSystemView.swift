@@ -2,23 +2,191 @@ import PDFKit
 import SwiftUI
 import SwiftData
 import DocumentScannerView
+import QuickLook
+
 
 struct FileSystemView: View {
     @Environment(\.modelContext) private var modelContext
-    let currentFolder: FolderItem? // The folder whose contents are being displayed, nil for root
-
+    let currentFolder: FolderItem?
+    
     // State for managing alerts
     @State private var showingCreateFolderAlert = false
     @State private var newFolderName = ""
-
     @State private var showingRenameFolderAlert = false
     @State private var folderToRename: FolderItem?
     @State private var renamedFolderName = ""
-
     @State private var showingDeleteConfirmationAlert = false
     @State private var folderMarkedForDeletion: FolderItem?
-    @State private var isShowingScanner = false // State to control scanner presentation
-
+    @State private var isShowingScanner = false
+    
+    // QuickLook state
+    @State private var selectedFileURL: URL?
+    @State private var isShowingQuickLook = false
+    
+    // Query for subfolders and files
+    @Query var items: [FolderItem]
+    @Query var files: [FileItem]
+    
+    init(currentFolder: FolderItem?) {
+        self.currentFolder = currentFolder
+        
+        if let currentFolder {
+            let currentFolderID = currentFolder.persistentModelID
+            self._items = Query(filter: #Predicate<FolderItem> { folderItem in
+                folderItem.parent?.persistentModelID == currentFolderID
+            }, sort: [SortDescriptor(\FolderItem.name)])
+            self._files = Query(filter: #Predicate<FileItem> { fileItem in
+                fileItem.parent?.persistentModelID == currentFolderID
+            }, sort: [SortDescriptor(\FileItem.name)])
+        } else {
+            self._items = Query(filter: #Predicate<FolderItem> { folderItem in
+                folderItem.parent == nil
+            }, sort: [SortDescriptor(\FolderItem.name)])
+            self._files = Query(filter: #Predicate<FileItem> { fileItem in
+                fileItem.parent == nil
+            }, sort: [SortDescriptor(\FileItem.name)])
+        }
+    }
+    
+    var body: some View {
+        ZStack {
+            List {
+                Section(header: Text("Folders")) {
+                    ForEach(items) { folder in
+                        NavigationLink(value: folder) {
+                            HStack {
+                                Image(systemName: "folder")
+                                Text(folder.name)
+                            }
+                        }
+                        .contextMenu {
+                            Button("Rename") {
+                                folderToRename = folder
+                                renamedFolderName = folder.name
+                                showingRenameFolderAlert = true
+                            }
+                            Button("Delete", role: .destructive) {
+                                requestDeleteConfirmation(for: folder)
+                            }
+                        }
+                    }
+                    .onDelete(perform: deleteFoldersAtIndexSet)
+                }
+                
+                Section(header: Text("Files")) {
+                    ForEach(files) { file in
+                        Button {
+                            if FileManager.default.fileExists(atPath: file.fullURL.path) {
+                                print("Opening file at: \(file.fullURL.path)")
+                                selectedFileURL = file.fullURL
+                                isShowingQuickLook = true
+                            } else {
+                                print("File does not exist at path: \(file.fullURL.path)")
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "doc.richtext")
+                                    .foregroundColor(.blue)
+                                Text(file.name)
+                                    .foregroundColor(.primary)
+                                Spacer()
+                            }
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                // TODO: Implement file deletion
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+                }
+            }
+            
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    Button {
+                        isShowingScanner = true
+                    } label: {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 28, weight: .medium))
+                            .frame(width: 60, height: 60)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .clipShape(Circle())
+                            .shadow(color: .gray.opacity(0.6), radius: 8, x: 0, y: 4)
+                    }
+                    .accessibilityLabel("Scan new document")
+                    Spacer()
+                }
+                .padding(.bottom, 40)
+            }
+            .ignoresSafeArea(.keyboard)
+        }
+        .navigationTitle(currentFolder?.name ?? "Clerk")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    newFolderName = ""
+                    showingCreateFolderAlert = true
+                } label: {
+                    Label("Create Folder", systemImage: "plus.circle.fill")
+                }
+            }
+        }
+        .alert("New Folder", isPresented: $showingCreateFolderAlert) {
+            TextField("Folder Name", text: $newFolderName)
+            Button("Create") {
+                createFolder(name: newFolderName)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Enter a name for the new folder.")
+        }
+        .alert("Rename Folder", isPresented: $showingRenameFolderAlert) {
+            TextField("New Name", text: $renamedFolderName)
+            Button("Rename") {
+                if let folder = folderToRename {
+                    renameFolder(folder, newName: renamedFolderName)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Enter the new name for '\(folderToRename?.name ?? "")'.")
+        }
+        .navigationDestination(for: FolderItem.self) { folder in
+            FileSystemView(currentFolder: folder)
+        }
+        .alert("Confirm Deletion", isPresented: $showingDeleteConfirmationAlert, presenting: folderMarkedForDeletion) { folderToDelete in
+            Button("Delete", role: .destructive) {
+                performDelete(folder: folderToDelete)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { folderToDelete in
+            Text("Are you sure you want to delete '\(folderToDelete.name)'? All its contents will also be deleted.")
+        }
+        .sheet(isPresented: $isShowingScanner) {
+            DocumentScannerView { result in
+                switch result {
+                case .success(let scannedImages):
+                    saveScansAsPDF(scannedImages)
+                case .failure(let error):
+                    print("Scan failed: \(error.localizedDescription)")
+                }
+            }
+        }
+        .sheet(isPresented: $isShowingQuickLook) {
+            if let url = selectedFileURL {
+                QuickLookPreview(url: url)
+            }
+        }
+    }
+    
     // MARK: - Save Scans as PDF
     private func saveScansAsPDF(_ images: [UIImage]) {
         guard !images.isEmpty else { return }
@@ -41,162 +209,20 @@ struct FileSystemView: View {
         pdfContext.closePDF()
 
         let filename = "Scan_\(Int(Date().timeIntervalSince1970)).pdf"
-        let documentsFolder = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let fileURL = documentsFolder.appendingPathComponent(filename)
-        pdfData.write(to: fileURL, atomically: true)
-
-        let newFile = FileItem(name: filename, url: fileURL, parent: currentFolder)
-        modelContext.insert(newFile)
-
+        let newFile = FileItem(name: filename, parent: currentFolder)
+        
+        // Ensure the parent directory exists before saving
+        newFile.ensureParentDirectoryExists()
+        
+        // Save the PDF file
         do {
+            try pdfData.write(to: newFile.fullURL, options: .atomic)
+            modelContext.insert(newFile)
             try modelContext.save()
             print("Successfully saved file '\(filename)' to folder: \(currentFolder?.name ?? "root")")
-            print("File saved at path: \(fileURL.path)")
+            print("File saved at path: \(newFile.fullURL.path)")
         } catch {
-            print("Failed to save FileItem: \(error.localizedDescription)")
-        }
-    }
-
-
-    // Query for subfolders of the currentFolder or root folders if currentFolder is nil
-    @Query var items: [FolderItem]
-    @Query var files: [FileItem]
-
-    init(currentFolder: FolderItem?) {
-        self.currentFolder = currentFolder
-
-        if let currentFolder {
-            let currentFolderID = currentFolder.persistentModelID
-            self._items = Query(filter: #Predicate<FolderItem> { folderItem in
-                folderItem.parent?.persistentModelID == currentFolderID
-            }, sort: [SortDescriptor(\FolderItem.name)])
-            self._files = Query(filter: #Predicate<FileItem> { fileItem in
-                fileItem.parent?.persistentModelID == currentFolderID
-            }, sort: [SortDescriptor(\FileItem.name)])
-        } else {
-            self._items = Query(filter: #Predicate<FolderItem> { folderItem in
-                folderItem.parent == nil
-            }, sort: [SortDescriptor(\FolderItem.name)])
-            self._files = Query(filter: #Predicate<FileItem> { fileItem in
-                fileItem.parent == nil
-            }, sort: [SortDescriptor(\FileItem.name)])
-        }
-    }
-
-    var body: some View {
-        ZStack {
-            // Layer 1: The List of folders and files
-            List {
-                Section(header: Text("Folders")) {
-                    ForEach(items) { folder in
-                        NavigationLink(value: folder) { // Navigate to the selected folder
-                            HStack {
-                                Image(systemName: "folder")
-                                Text(folder.name)
-                            }
-                        }
-                        .contextMenu { // Options for each folder
-                            Button("Rename") {
-                                folderToRename = folder
-                                renamedFolderName = folder.name
-                                showingRenameFolderAlert = true
-                            }
-                            Button("Delete", role: .destructive) {
-                                requestDeleteConfirmation(for: folder)
-                            }
-                        }
-                    }
-                    .onDelete(perform: deleteFoldersAtIndexSet) // Swipe to delete
-                }
-                Section(header: Text("Files")) {
-                    ForEach(files) { file in
-                        HStack {
-                            Image(systemName: "doc.richtext")
-                            Text(file.name)
-                        }
-                    }
-                }
-            }
-
-            // Layer 2: The "Scan Document" Button
-            VStack {
-                Spacer() // Pushes the button towards the bottom
-
-                HStack {
-                    Spacer() // Centers the button horizontally
-                    Button {
-                        isShowingScanner = true // Present the DocumentScannerView
-                    } label: {
-                        Image(systemName: "camera.fill") // Icon-only for a circular button
-                            .font(.system(size: 28, weight: .medium))
-                            .frame(width: 60, height: 60) // Define a fixed size for the circle
-                            .background(Color.blue)       // Prominent background color
-                            .foregroundColor(.white)       // Icon color
-                            .clipShape(Circle())           // Make it circular
-                            .shadow(color: .gray.opacity(0.6), radius: 8, x: 0, y: 4) // Add a shadow for depth
-                    }
-                    .accessibilityLabel("Scan new document") // For accessibility
-                    Spacer() // Centers the button horizontally
-                }
-                .padding(.bottom, 40) // Adjust this padding to position in the "bottom quarter"
-            }
-            .ignoresSafeArea(.keyboard) // Ensures the button isn't affected by the keyboard appearing
-        }
-        .navigationTitle(currentFolder?.name ?? "Clerk")
-        .toolbar { // Toolbar for other items, like "Create Folder"
-            ToolbarItem(placement: .navigationBarTrailing) {
-                // The "Create Folder" button remains in the toolbar
-                Button {
-                    newFolderName = "" // Clear previous input
-                    showingCreateFolderAlert = true
-                } label: {
-                    Label("Create Folder", systemImage: "plus.circle.fill")
-                }
-            }
-        }
-        .alert("New Folder", isPresented: $showingCreateFolderAlert) { // Alerts remain attached
-            TextField("Folder Name", text: $newFolderName)
-            Button("Create") {
-                createFolder(name: newFolderName)
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Enter a name for the new folder.")
-        }
-        .alert("Rename Folder", isPresented: $showingRenameFolderAlert) {
-            TextField("New Name", text: $renamedFolderName)
-            Button("Rename") {
-                if let folder = folderToRename {
-                    renameFolder(folder, newName: renamedFolderName)
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Enter the new name for '\(folderToRename?.name ?? "")'.")
-        }
-        // This handles navigation to sub-folders.
-        // When a FolderItem is selected, a new FileSystemView is pushed for that folder.
-        .navigationDestination(for: FolderItem.self) { folder in
-            FileSystemView(currentFolder: folder)
-        }
-        .alert("Confirm Deletion", isPresented: $showingDeleteConfirmationAlert, presenting: folderMarkedForDeletion) { folderToDelete in
-            Button("Delete", role: .destructive) {
-                performDelete(folder: folderToDelete)
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: { folderToDelete in
-            Text("Are you sure you want to delete '\(folderToDelete.name)'? All its contents will also be deleted.")
-        }
-        // Sheet for DocumentScannerView
-        .sheet(isPresented: $isShowingScanner) {
-            DocumentScannerView { result in
-                switch result {
-                case .success(let scannedImages):
-                    saveScansAsPDF(scannedImages)
-                case .failure(let error):
-                    print("Scan failed: \(error.localizedDescription)")
-                }
-            }
+            print("Failed to save file: \(error.localizedDescription)")
         }
     }
 
@@ -235,24 +261,35 @@ struct FileSystemView: View {
     }
 }
 
-#Preview {
-    // This MainActor.assumeIsolated block helps set up SwiftData for previews correctly.
-    MainActor.assumeIsolated {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true) // Use in-memory store for previews
-        let container = try! ModelContainer(for: FolderItem.self, configurations: config)
-
-        // Sample Data for Preview
-        let context = container.mainContext
-        let workDocs = FolderItem(name: "Work Documents")
-        context.insert(workDocs)
-        let projectAlpha = FolderItem(name: "Project Alpha", parent: workDocs)
-        context.insert(projectAlpha)
-        let personalDocs = FolderItem(name: "Personal")
-        context.insert(personalDocs)
-
-        return NavigationStack { // Previews need a NavigationStack if the view uses navigation features
-            FileSystemView(currentFolder: nil) // Start at the root for the preview
+// Add QuickLook preview support
+struct QuickLookPreview: UIViewControllerRepresentable {
+    let url: URL
+    
+    func makeUIViewController(context: Context) -> UIViewController {
+        let controller = QLPreviewController()
+        controller.dataSource = context.coordinator
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        return Coordinator(url: url)
+    }
+    
+    class Coordinator: NSObject, QLPreviewControllerDataSource {
+        let url: URL
+        
+        init(url: URL) {
+            self.url = url
         }
-        .modelContainer(container) // Provide the model container to the preview
+        
+        func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+            return 1
+        }
+        
+        func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+            return url as QLPreviewItem
+        }
     }
 }
