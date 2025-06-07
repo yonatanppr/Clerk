@@ -4,13 +4,20 @@ import QuickLook
 struct QuickLookPreview: UIViewControllerRepresentable {
     let url: URL
     
-    func makeUIViewController(context: Context) -> UIViewController {
-        let controller = QLPreviewController()
-        controller.dataSource = context.coordinator
-        return controller
+    func makeUIViewController(context: Context) -> UINavigationController {
+        let previewController = QLPreviewController()
+        previewController.dataSource = context.coordinator
+        
+        // Create a navigation controller to wrap the preview controller
+        let navigationController = UINavigationController(rootViewController: previewController)
+        
+        // Store reference to the preview controller
+        context.coordinator.previewController = previewController
+        
+        return navigationController
     }
     
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {}
     
     func makeCoordinator() -> Coordinator {
         return Coordinator(url: url)
@@ -18,6 +25,7 @@ struct QuickLookPreview: UIViewControllerRepresentable {
     
     class Coordinator: NSObject, QLPreviewControllerDataSource {
         let url: URL
+        weak var previewController: QLPreviewController?
         
         init(url: URL) {
             self.url = url
