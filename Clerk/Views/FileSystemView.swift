@@ -19,6 +19,10 @@ struct FileSystemView: View {
     @State private var folderMarkedForDeletion: FolderItem?
     @State private var isShowingScanner = false
     
+    // Multi-select state
+    @State private var isMultiSelectMode = false
+    @State private var selectedFiles: Set<FileItem> = []
+    
     // QuickLook state
     @State private var selectedFileURL: URL?
     @State private var isShowingQuickLook = false
@@ -70,15 +74,27 @@ struct FileSystemView: View {
                 
                 Section(header: Text("Files")) {
                     ForEach(files) { file in
-                        FileRowView(file: file) {
-                            if FileManager.default.fileExists(atPath: file.fullURL.path) {
-                                print("Opening file at: \(file.fullURL.path)")
-                                selectedFileURL = file.fullURL
-                                isShowingQuickLook = true
-                            } else {
-                                print("File does not exist at path: \(file.fullURL.path)")
+                        FileRowView(
+                            file: file,
+                            isSelected: selectedFiles.contains(file),
+                            onTap: {
+                                if isMultiSelectMode {
+                                    if selectedFiles.contains(file) {
+                                        selectedFiles.remove(file)
+                                    } else {
+                                        selectedFiles.insert(file)
+                                    }
+                                } else {
+                                    if FileManager.default.fileExists(atPath: file.fullURL.path) {
+                                        print("Opening file at: \(file.fullURL.path)")
+                                        selectedFileURL = file.fullURL
+                                        isShowingQuickLook = true
+                                    } else {
+                                        print("File does not exist at path: \(file.fullURL.path)")
+                                    }
+                                }
                             }
-                        }
+                        )
                     }
                 }
             }
@@ -108,11 +124,36 @@ struct FileSystemView: View {
         .navigationTitle(currentFolder?.name ?? "Clerk")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    newFolderName = ""
-                    showingCreateFolderAlert = true
-                } label: {
-                    Label("Create Folder", systemImage: "plus.circle.fill")
+                if !files.isEmpty {
+                    Button {
+                        isMultiSelectMode.toggle()
+                        if !isMultiSelectMode {
+                            selectedFiles.removeAll()
+                        }
+                    } label: {
+                        Text(isMultiSelectMode ? "Done" : "Select")
+                    }
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if !isMultiSelectMode {
+                    Button {
+                        newFolderName = ""
+                        showingCreateFolderAlert = true
+                    } label: {
+                        Label("Create Folder", systemImage: "plus.circle.fill")
+                    }
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if isMultiSelectMode && !selectedFiles.isEmpty {
+                    Button(role: .destructive) {
+                        showingDeleteConfirmationAlert = true
+                    } label: {
+                        Label("Delete Selected", systemImage: "trash")
+                    }
                 }
             }
         }
@@ -136,9 +177,6 @@ struct FileSystemView: View {
         } message: {
             Text("Enter the new name for '\(folderToRename?.name ?? "")'.")
         }
-        .navigationDestination(for: FolderItem.self) { folder in
-            FileSystemView(currentFolder: folder)
-        }
         .alert("Confirm Deletion", isPresented: $showingDeleteConfirmationAlert, presenting: folderMarkedForDeletion) { folderToDelete in
             Button("Delete", role: .destructive) {
                 performDelete(folder: folderToDelete)
@@ -146,6 +184,18 @@ struct FileSystemView: View {
             Button("Cancel", role: .cancel) {}
         } message: { folderToDelete in
             Text("Are you sure you want to delete '\(folderToDelete.name)'? All its contents will also be deleted.")
+        }
+        .alert("Delete Selected Files", isPresented: $showingDeleteConfirmationAlert) {
+            Button("Delete", role: .destructive) {
+                for file in selectedFiles {
+                    FileService.deleteFile(file, modelContext: modelContext)
+                }
+                selectedFiles.removeAll()
+                isMultiSelectMode = false
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to delete \(selectedFiles.count) selected file(s)?")
         }
         .sheet(isPresented: $isShowingScanner) {
             DocumentScannerView { result in
@@ -162,6 +212,9 @@ struct FileSystemView: View {
             if let url = selectedFileURL {
                 QuickLookPreview(url: url)
             }
+        }
+        .navigationDestination(for: FolderItem.self) { folder in
+            FileSystemView(currentFolder: folder)
         }
     }
     
