@@ -53,53 +53,30 @@ struct FileSystemView: View {
             List {
                 Section(header: Text("Folders")) {
                     ForEach(items) { folder in
-                        NavigationLink(value: folder) {
-                            HStack {
-                                Image(systemName: "folder")
-                                Text(folder.name)
-                            }
-                        }
-                        .contextMenu {
-                            Button("Rename") {
+                        FolderRowView(
+                            folder: folder,
+                            onRename: {
                                 folderToRename = folder
                                 renamedFolderName = folder.name
                                 showingRenameFolderAlert = true
-                            }
-                            Button("Delete", role: .destructive) {
+                            },
+                            onDelete: {
                                 requestDeleteConfirmation(for: folder)
                             }
-                        }
+                        )
                     }
                     .onDelete(perform: deleteFoldersAtIndexSet)
                 }
                 
                 Section(header: Text("Files")) {
                     ForEach(files) { file in
-                        Button {
+                        FileRowView(file: file) {
                             if FileManager.default.fileExists(atPath: file.fullURL.path) {
                                 print("Opening file at: \(file.fullURL.path)")
                                 selectedFileURL = file.fullURL
                                 isShowingQuickLook = true
                             } else {
                                 print("File does not exist at path: \(file.fullURL.path)")
-                            }
-                        } label: {
-                            HStack {
-                                Image(systemName: "doc.richtext")
-                                    .foregroundColor(.blue)
-                                Text(file.name)
-                                    .foregroundColor(.primary)
-                                Spacer()
-                            }
-                            .frame(maxWidth: .infinity)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                // TODO: Implement file deletion
-                            } label: {
-                                Label("Delete", systemImage: "trash")
                             }
                         }
                     }
@@ -174,7 +151,8 @@ struct FileSystemView: View {
             DocumentScannerView { result in
                 switch result {
                 case .success(let scannedImages):
-                    saveScansAsPDF(scannedImages)
+                    let filename = "Scan_\(Int(Date().timeIntervalSince1970)).pdf"
+                    PDFGenerator.generatePDF(from: scannedImages, fileName: filename, parent: currentFolder, modelContext: modelContext)
                 case .failure(let error):
                     print("Scan failed: \(error.localizedDescription)")
                 }
@@ -187,109 +165,32 @@ struct FileSystemView: View {
         }
     }
     
-    // MARK: - Save Scans as PDF
-    private func saveScansAsPDF(_ images: [UIImage]) {
-        guard !images.isEmpty else { return }
-        let pdfData = NSMutableData()
-        let pdfConsumer = CGDataConsumer(data: pdfData as CFMutableData)!
-
-        // Use first image size as the PDF page size, or default to standard if unavailable
-        var mediaBox = CGRect(x: 0, y: 0, width: 612, height: 792)
-        guard let pdfContext = CGContext(consumer: pdfConsumer, mediaBox: &mediaBox, nil) else { return }
-
-        for image in images {
-            let pageSize = CGRect(origin: .zero, size: image.size)
-            var pageMediaBox = pageSize
-            pdfContext.beginPage(mediaBox: &pageMediaBox)
-            if let cgImage = image.cgImage {
-                pdfContext.draw(cgImage, in: pageSize)
-            }
-            pdfContext.endPage()
-        }
-        pdfContext.closePDF()
-
-        let filename = "Scan_\(Int(Date().timeIntervalSince1970)).pdf"
-        let newFile = FileItem(name: filename, parent: currentFolder)
-        
-        // Ensure the parent directory exists before saving
-        newFile.ensureParentDirectoryExists()
-        
-        // Save the PDF file
-        do {
-            try pdfData.write(to: newFile.fullURL, options: .atomic)
-            modelContext.insert(newFile)
-            try modelContext.save()
-            print("Successfully saved file '\(filename)' to folder: \(currentFolder?.name ?? "root")")
-            print("File saved at path: \(newFile.fullURL.path)")
-        } catch {
-            print("Failed to save file: \(error.localizedDescription)")
-        }
-    }
-
     private func createFolder(name: String) {
         guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         let newFolder = FolderItem(name: name, parent: currentFolder)
         modelContext.insert(newFolder)
         do {
-            try modelContext.save() // Explicitly save the context
+            try modelContext.save()
         } catch {
-            // In a production app, you might want to show an alert to the user
             print("Failed to save new folder: \(error.localizedDescription)")
         }
     }
-
+    
     private func renameFolder(_ folder: FolderItem, newName: String) {
         guard !newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         folder.name = newName
-        // SwiftData automatically saves changes to managed objects.
     }
-
+    
     private func requestDeleteConfirmation(for folder: FolderItem) {
         folderMarkedForDeletion = folder
         showingDeleteConfirmationAlert = true
     }
-
+    
     private func performDelete(folder: FolderItem) {
-        modelContext.delete(folder) // Cascade delete will handle subfolders
-        // Optionally, add error handling with try? modelContext.save() if experiencing issues
+        modelContext.delete(folder)
     }
-
+    
     private func deleteFoldersAtIndexSet(offsets: IndexSet) {
-        // Standard swipe-to-delete usually acts on one item.
-        // If multiple were possible, a different confirmation strategy might be needed.
         offsets.map { items[$0] }.forEach(requestDeleteConfirmation)
-    }
-}
-
-// Add QuickLook preview support
-struct QuickLookPreview: UIViewControllerRepresentable {
-    let url: URL
-    
-    func makeUIViewController(context: Context) -> UIViewController {
-        let controller = QLPreviewController()
-        controller.dataSource = context.coordinator
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        return Coordinator(url: url)
-    }
-    
-    class Coordinator: NSObject, QLPreviewControllerDataSource {
-        let url: URL
-        
-        init(url: URL) {
-            self.url = url
-        }
-        
-        func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
-            return 1
-        }
-        
-        func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
-            return url as QLPreviewItem
-        }
     }
 }
