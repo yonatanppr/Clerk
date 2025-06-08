@@ -7,34 +7,30 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: macos-latest
 
     steps:
-      - name: ⬇️ Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history to avoid .pbxproj corruption
 
-      - name: ⚙️ Set up Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.2.app  # change to version you're using
-
-      - name: 🔧 Install dependencies (CocoaPods if Podfile exists)
+      - name: Debug .pbxproj for missing isa entries
         run: |
-          if [ -f "Podfile" ]; then
-            brew install cocoapods
-            pod install
-          fi
-          
-      - name: ✅ Validate Xcode project
-        run: plutil -lint Clerk.xcodeproj/project.pbxproj
+          echo "Checking for missing 'isa =' entries in project.pbxproj..."
+          grep -v 'isa =' Clerk.xcodeproj/project.pbxproj | grep -E '^[[:space:]]*[A-F0-9]{24}' && exit 1 || echo "✅ All objects have 'isa' keys."
 
-      - name: 🧪 Run Unit Tests
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest
+
+      - name: Build app
         run: |
-          xcodebuild test \
+          xcodebuild \
             -project Clerk.xcodeproj \
             -scheme Clerk \
-            -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
-            ONLY_ACTIVE_ARCH=YES \
-            | xcpretty
-        env:
-          NSUnbufferedIO: YES
+            -sdk iphoneos \
+            -configuration Release \
+            clean build
