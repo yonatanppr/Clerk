@@ -21,12 +21,31 @@ jobs:
         with:
           xcode-version: latest
 
+      - name: Find available iOS Simulator
+        id: find-sim
+        run: |
+          SIMULATOR=$(xcrun simctl list devices available | grep -E 'iPhone.*(Booted|Shutdown)' | grep -v unavailable | head -n1 | sed -E 's/^.*([A-F0-9-]{36}).*$/\1/')
+          echo "SIMULATOR_ID=$SIMULATOR" >> $GITHUB_ENV
+
+      - name: Boot simulator
+        run: xcrun simctl boot "$SIMULATOR_ID" || true
+
       - name: Build app (Simulator)
         run: |
           xcodebuild \
             -project Clerk.xcodeproj \
             -scheme Clerk \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=Any iOS Simulator Device' \
+            -destination "id=$SIMULATOR_ID" \
             -configuration Release \
             clean build
+
+      - name: Run Tests
+        run: |
+          xcodebuild \
+            -project Clerk.xcodeproj \
+            -scheme Clerk \
+            -sdk iphonesimulator \
+            -destination "id=$SIMULATOR_ID" \
+            -configuration Release \
+            test
