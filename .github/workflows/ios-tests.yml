@@ -23,6 +23,9 @@ jobs:
             brew install cocoapods
             pod install
           fi
+          
+      - name: ✅ Validate Xcode project
+        run: plutil -lint Clerk.xcodeproj/project.pbxproj
 
       - name: 🧪 Run Unit Tests
         run: |
