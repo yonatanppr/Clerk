@@ -2,50 +2,37 @@ name: iOS Unit & UI Tests
 
 on:
   pull_request:
-    branches: [ main ]  # adjust as needed
+    branches: [ main ]
   push:
     branches: [ main ]
 
 jobs:
-  build:
+  test: # Renamed job for clarity
     runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history to avoid .pbxproj corruption
+          fetch-depth: 0 # Fetch full history to avoid .pbxproj corruption
 
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest
+          xcode-version: 'latest' # It's good practice to be explicit, e.g., '16.0'
 
-      - name: Find available iOS Simulator
-        id: find-sim
+      - name: Run tests
         run: |
-          SIMULATOR=$(xcrun simctl list devices available | grep -E 'iPhone.*(Booted|Shutdown)' | grep -v unavailable | head -n1 | sed -E 's/^.*([A-F0-9-]{36}).*$/\1/')
-          echo "SIMULATOR_ID=$SIMULATOR" >> $GITHUB_ENV
+          # Find a valid, available iOS Simulator destination from xcodebuild's perspective
+          # This is more reliable than parsing 'xcrun simctl list'
+          DESTINATION=$(xcodebuild -showdestinations -project Clerk.xcodeproj -scheme Clerk | grep "platform:iOS Simulator" | head -n 1)
+          
+          echo "Found destination: $DESTINATION"
 
-      - name: Boot simulator
-        run: xcrun simctl boot "$SIMULATOR_ID" || true
-
-      - name: Build app (Simulator)
-        run: |
           xcodebuild \
             -project Clerk.xcodeproj \
             -scheme Clerk \
+            -destination "$DESTINATION" \
             -sdk iphonesimulator \
-            -destination "id=$SIMULATOR_ID" \
             -configuration Release \
-            clean build
-
-      - name: Run Tests
-        run: |
-          xcodebuild \
-            -project Clerk.xcodeproj \
-            -scheme Clerk \
-            -sdk iphonesimulator \
-            -destination "id=$SIMULATOR_ID" \
-            -configuration Release \
-            test
+            clean test
