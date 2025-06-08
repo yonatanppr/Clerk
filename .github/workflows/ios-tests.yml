@@ -17,11 +17,12 @@ jobs:
       - name: ⚙️ Set up Xcode
         run: sudo xcode-select -s /Applications/Xcode_15.2.app  # change to version you're using
 
-      - name: 🔧 Install dependencies (if using CocoaPods)
+      - name: 🔧 Install dependencies (CocoaPods if Podfile exists)
         run: |
-          brew install cocoapods
-          pod install
-        if: exists('Podfile')
+          if [ -f "Podfile" ]; then
+            brew install cocoapods
+            pod install
+          fi
 
       - name: 🧪 Run Unit Tests
         run: |
