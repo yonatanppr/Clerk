@@ -26,7 +26,7 @@ jobs:
           xcodebuild \
             -project Clerk.xcodeproj \
             -scheme Clerk \
-            -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=latest' \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=latest' \
             -sdk iphonesimulator \
             -configuration Release \
             clean test
