@@ -1,0 +1,36 @@
+name: iOS Unit & UI Tests
+
+on:
+  pull_request:
+    branches: [ main ]  # adjust as needed
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Set up Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.2.app  # change to version you're using
+
+      - name: 🔧 Install dependencies (if using CocoaPods)
+        run: |
+          brew install cocoapods
+          pod install
+        if: exists('Podfile')
+
+      - name: 🧪 Run Unit Tests
+        run: |
+          xcodebuild test \
+            -workspace Clerk.xcworkspace \
+            -scheme Clerk \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            ONLY_ACTIVE_ARCH=YES \
+            | xcpretty
+        env:
+          NSUnbufferedIO: YES
