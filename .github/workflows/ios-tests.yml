@@ -23,9 +23,10 @@ jobs:
 
       - name: Build app
         run: |
-          xcodebuild \
-            -project Clerk.xcodeproj \
-            -scheme Clerk \
-            -sdk iphoneos \
-            -configuration Release \
-            clean build
+          codebuild \
+          -project Clerk.xcodeproj \
+          -scheme Clerk \
+          -sdk iphonesimulator \
+          -destination 'platform=iOS Simulator,name=iPhone 15' \
+          -configuration Release \
+          clean build
