@@ -1,10 +1,3 @@
-//
-//  ClerkUITests.swift
-//  ClerkUITests
-//
-//  Created by Yonatan Pepper on 01.06.25.
-//
-
 import XCTest
 
 final class ClerkUITests: XCTestCase {
