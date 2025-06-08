@@ -13,33 +13,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: 'latest'
 
-      - name: Run tests
+      - name: Run tests on a standard simulator
         run: |
-          # 1. Get the list of destinations from xcodebuild.
-          # 2. Grep for a real iOS Simulator (ignoring placeholders).
-          # 3. Use grep with a regular expression to extract just the simulator's ID.
-          # 4. Clean up the output to get the raw UUID.
-          SIMULATOR_ID=$(xcodebuild -showdestinations -project Clerk.xcodeproj -scheme Clerk | grep "platform:iOS Simulator" | grep -v "placeholder" | head -n 1 | grep -oE 'id:[A-F0-9-]+' | sed 's/id://')
-          
-          if [ -z "$SIMULATOR_ID" ]; then
-            echo "Error: No suitable simulator found."
-            exit 1
-          fi
-
-          echo "Found simulator ID: $SIMULATOR_ID"
-
+          # Directly specify a standard simulator. This is often more reliable in CI.
+          # Using 'OS=latest' allows Xcode to pick the correct OS version automatically.
           xcodebuild \
             -project Clerk.xcodeproj \
             -scheme Clerk \
-            -destination "id=$SIMULATOR_ID" \
+            -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=latest' \
             -sdk iphonesimulator \
             -configuration Release \
             clean test
