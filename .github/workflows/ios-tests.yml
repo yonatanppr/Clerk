@@ -27,6 +27,6 @@ jobs:
             -project Clerk.xcodeproj \
             -scheme Clerk \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'platform=iOS Simulator,name=iPhone SE (3rd generation)' \
             -configuration Release \
             clean build
