@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -279,11 +279,9 @@
 				Base,
 			);
 			mainGroup = 2D7A831F2DECA6E0004319F8;
-			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				2DA550652DF36F5400C1AC0C /* XCRemoteSwiftPackageReference "DocumentScannerView" */,
 			);
-			preferredProjectObjectVersion = 77;
 			productRefGroup = 2D7A83292DECA6E0004319F8 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
