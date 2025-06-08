@@ -7,32 +7,39 @@ on:
     branches: [ main ]
 
 jobs:
-  test: # Renamed job for clarity
+  test:
     runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch full history to avoid .pbxproj corruption
+          fetch-depth: 0
 
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 'latest' # It's good practice to be explicit, e.g., '16.0'
+          xcode-version: 'latest'
 
       - name: Run tests
         run: |
-          # Find a valid, available iOS Simulator destination from xcodebuild's perspective
-          # This is more reliable than parsing 'xcrun simctl list'
-          DESTINATION=$(xcodebuild -showdestinations -project Clerk.xcodeproj -scheme Clerk | grep "platform:iOS Simulator" | head -n 1)
+          # 1. Get the list of destinations from xcodebuild.
+          # 2. Grep for a real iOS Simulator (ignoring placeholders).
+          # 3. Use grep with a regular expression to extract just the simulator's ID.
+          # 4. Clean up the output to get the raw UUID.
+          SIMULATOR_ID=$(xcodebuild -showdestinations -project Clerk.xcodeproj -scheme Clerk | grep "platform:iOS Simulator" | grep -v "placeholder" | head -n 1 | grep -oE 'id:[A-F0-9-]+' | sed 's/id://')
           
-          echo "Found destination: $DESTINATION"
+          if [ -z "$SIMULATOR_ID" ]; then
+            echo "Error: No suitable simulator found."
+            exit 1
+          fi
+
+          echo "Found simulator ID: $SIMULATOR_ID"
 
           xcodebuild \
             -project Clerk.xcodeproj \
             -scheme Clerk \
-            -destination "$DESTINATION" \
+            -destination "id=$SIMULATOR_ID" \
             -sdk iphonesimulator \
             -configuration Release \
             clean test
