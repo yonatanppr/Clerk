@@ -33,18 +33,8 @@
 		2D7A833F2DECA6E1004319F8 /* ClerkUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClerkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		2DDA28BC2DF75D2D00B24080 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 2D7A83272DECA6E0004319F8 /* Clerk */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		2DDA28AB2DF75D2D00B24080 /* Clerk */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2DDA28BC2DF75D2D00B24080 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Clerk; sourceTree = "<group>"; };
+		2DDA28AB2DF75D2D00B24080 /* Clerk */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Clerk; sourceTree = "<group>"; };
 		2DDA28C12DF75D3300B24080 /* ClerkTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ClerkTests; sourceTree = "<group>"; };
 		2DDA28C82DF75D3800B24080 /* ClerkUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ClerkUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
