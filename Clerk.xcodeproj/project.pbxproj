@@ -7,15 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2D5E285A2DF6F09000E013FC /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2D5E28592DF6F08700E013FC /* Secrets.plist */; };
-		2D65347D2DF6065400182A23 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2D6534792DF6065400182A23 /* Assets.xcassets */; };
-		2D6534882DF6065400182A23 /* ClerkApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65347A2DF6065400182A23 /* ClerkApp.swift */; };
-		2D65348E2DF6065800182A23 /* ClerkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534892DF6065800182A23 /* ClerkTests.swift */; };
-		2D65348F2DF6065800182A23 /* FileItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65348A2DF6065800182A23 /* FileItemTests.swift */; };
-		2D6534902DF6065800182A23 /* FileServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65348B2DF6065800182A23 /* FileServiceTests.swift */; };
-		2D6534912DF6065800182A23 /* FolderItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65348C2DF6065800182A23 /* FolderItemTests.swift */; };
-		2D6534952DF6065A00182A23 /* ClerkUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534922DF6065A00182A23 /* ClerkUITests.swift */; };
-		2D6534962DF6065A00182A23 /* ClerkUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534932DF6065A00182A23 /* ClerkUITestsLaunchTests.swift */; };
 		2DA550672DF36F5400C1AC0C /* DocumentScannerView in Frameworks */ = {isa = PBXBuildFile; productRef = 2DA550662DF36F5400C1AC0C /* DocumentScannerView */; };
 /* End PBXBuildFile section */
 
@@ -37,25 +28,25 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		2D5E28592DF6F08700E013FC /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
-		2D6534792DF6065400182A23 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		2D65347A2DF6065400182A23 /* ClerkApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClerkApp.swift; sourceTree = "<group>"; };
-		2D65347B2DF6065400182A23 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		2D6534892DF6065800182A23 /* ClerkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClerkTests.swift; sourceTree = "<group>"; };
-		2D65348A2DF6065800182A23 /* FileItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileItemTests.swift; sourceTree = "<group>"; };
-		2D65348B2DF6065800182A23 /* FileServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileServiceTests.swift; sourceTree = "<group>"; };
-		2D65348C2DF6065800182A23 /* FolderItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderItemTests.swift; sourceTree = "<group>"; };
-		2D6534922DF6065A00182A23 /* ClerkUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClerkUITests.swift; sourceTree = "<group>"; };
-		2D6534932DF6065A00182A23 /* ClerkUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClerkUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		2D7A83282DECA6E0004319F8 /* Clerk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clerk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D7A83352DECA6E1004319F8 /* ClerkTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClerkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D7A833F2DECA6E1004319F8 /* ClerkUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClerkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2DDA28BC2DF75D2D00B24080 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2D7A83272DECA6E0004319F8 /* Clerk */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		2DDA287E2DF75BF700B24080 /* Models */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Models; sourceTree = "<group>"; };
-		2DDA28852DF75BFB00B24080 /* Services */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Services; sourceTree = "<group>"; };
-		2DDA28902DF75BFE00B24080 /* Views */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Views; sourceTree = "<group>"; };
+		2DDA28AB2DF75D2D00B24080 /* Clerk */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2DDA28BC2DF75D2D00B24080 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Clerk; sourceTree = "<group>"; };
+		2DDA28C12DF75D3300B24080 /* ClerkTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ClerkTests; sourceTree = "<group>"; };
+		2DDA28C82DF75D3800B24080 /* ClerkUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ClerkUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,46 +75,12 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		2D65347C2DF6065400182A23 /* Clerk */ = {
-			isa = PBXGroup;
-			children = (
-				2DDA287E2DF75BF700B24080 /* Models */,
-				2DDA28852DF75BFB00B24080 /* Services */,
-				2DDA28902DF75BFE00B24080 /* Views */,
-				2D6534792DF6065400182A23 /* Assets.xcassets */,
-				2D65347A2DF6065400182A23 /* ClerkApp.swift */,
-				2D65347B2DF6065400182A23 /* Info.plist */,
-				2D5E28592DF6F08700E013FC /* Secrets.plist */,
-			);
-			path = Clerk;
-			sourceTree = "<group>";
-		};
-		2D65348D2DF6065800182A23 /* ClerkTests */ = {
-			isa = PBXGroup;
-			children = (
-				2D6534892DF6065800182A23 /* ClerkTests.swift */,
-				2D65348A2DF6065800182A23 /* FileItemTests.swift */,
-				2D65348B2DF6065800182A23 /* FileServiceTests.swift */,
-				2D65348C2DF6065800182A23 /* FolderItemTests.swift */,
-			);
-			path = ClerkTests;
-			sourceTree = "<group>";
-		};
-		2D6534942DF6065A00182A23 /* ClerkUITests */ = {
-			isa = PBXGroup;
-			children = (
-				2D6534922DF6065A00182A23 /* ClerkUITests.swift */,
-				2D6534932DF6065A00182A23 /* ClerkUITestsLaunchTests.swift */,
-			);
-			path = ClerkUITests;
-			sourceTree = "<group>";
-		};
 		2D7A831F2DECA6E0004319F8 = {
 			isa = PBXGroup;
 			children = (
-				2D65347C2DF6065400182A23 /* Clerk */,
-				2D65348D2DF6065800182A23 /* ClerkTests */,
-				2D6534942DF6065A00182A23 /* ClerkUITests */,
+				2DDA28AB2DF75D2D00B24080 /* Clerk */,
+				2DDA28C12DF75D3300B24080 /* ClerkTests */,
+				2DDA28C82DF75D3800B24080 /* ClerkUITests */,
 				2D7A83292DECA6E0004319F8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -154,9 +111,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				2DDA287E2DF75BF700B24080 /* Models */,
-				2DDA28852DF75BFB00B24080 /* Services */,
-				2DDA28902DF75BFE00B24080 /* Views */,
+				2DDA28AB2DF75D2D00B24080 /* Clerk */,
 			);
 			name = Clerk;
 			packageProductDependencies = (
@@ -179,6 +134,9 @@
 			dependencies = (
 				2D7A83372DECA6E1004319F8 /* PBXTargetDependency */,
 			);
+			fileSystemSynchronizedGroups = (
+				2DDA28C12DF75D3300B24080 /* ClerkTests */,
+			);
 			name = ClerkTests;
 			packageProductDependencies = (
 			);
@@ -198,6 +156,9 @@
 			);
 			dependencies = (
 				2D7A83412DECA6E1004319F8 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				2DDA28C82DF75D3800B24080 /* ClerkUITests */,
 			);
 			name = ClerkUITests;
 			packageProductDependencies = (
@@ -257,8 +218,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2D5E285A2DF6F09000E013FC /* Secrets.plist in Resources */,
-				2D65347D2DF6065400182A23 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -283,7 +242,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2D6534882DF6065400182A23 /* ClerkApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -291,10 +249,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2D65348E2DF6065800182A23 /* ClerkTests.swift in Sources */,
-				2D65348F2DF6065800182A23 /* FileItemTests.swift in Sources */,
-				2D6534902DF6065800182A23 /* FileServiceTests.swift in Sources */,
-				2D6534912DF6065800182A23 /* FolderItemTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,8 +256,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2D6534952DF6065A00182A23 /* ClerkUITests.swift in Sources */,
-				2D6534962DF6065A00182A23 /* ClerkUITestsLaunchTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
