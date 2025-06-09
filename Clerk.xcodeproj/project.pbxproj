@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2D5E28542DF6ED6C00E013FC /* DocumentReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5E28532DF6ED6C00E013FC /* DocumentReviewView.swift */; };
+		2D5E28562DF6ED7E00E013FC /* ScannedDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5E28552DF6ED7E00E013FC /* ScannedDocument.swift */; };
+		2D5E28582DF6ED8D00E013FC /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5E28572DF6ED8D00E013FC /* LLMService.swift */; };
+		2D5E285A2DF6F09000E013FC /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2D5E28592DF6F08700E013FC /* Secrets.plist */; };
 		2D65347D2DF6065400182A23 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2D6534792DF6065400182A23 /* Assets.xcassets */; };
 		2D65347F2DF6065400182A23 /* FileItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65346C2DF6065400182A23 /* FileItem.swift */; };
 		2D6534802DF6065400182A23 /* FolderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65346D2DF6065400182A23 /* FolderItem.swift */; };
@@ -45,6 +49,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2D5E28532DF6ED6C00E013FC /* DocumentReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentReviewView.swift; sourceTree = "<group>"; };
+		2D5E28552DF6ED7E00E013FC /* ScannedDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannedDocument.swift; sourceTree = "<group>"; };
+		2D5E28572DF6ED8D00E013FC /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
+		2D5E28592DF6F08700E013FC /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
 		2D65346C2DF6065400182A23 /* FileItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileItem.swift; sourceTree = "<group>"; };
 		2D65346D2DF6065400182A23 /* FolderItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderItem.swift; sourceTree = "<group>"; };
 		2D65346F2DF6065400182A23 /* FileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileService.swift; sourceTree = "<group>"; };
@@ -97,6 +105,7 @@
 		2D65346E2DF6065400182A23 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				2D5E28552DF6ED7E00E013FC /* ScannedDocument.swift */,
 				2D65346C2DF6065400182A23 /* FileItem.swift */,
 				2D65346D2DF6065400182A23 /* FolderItem.swift */,
 			);
@@ -107,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				2D65346F2DF6065400182A23 /* FileService.swift */,
+				2D5E28572DF6ED8D00E013FC /* LLMService.swift */,
 				2D6534702DF6065400182A23 /* PDFGenerator.swift */,
 			);
 			path = Services;
@@ -127,6 +137,7 @@
 			children = (
 				2D6534752DF6065400182A23 /* Components */,
 				2D6534762DF6065400182A23 /* ContentView.swift */,
+				2D5E28532DF6ED6C00E013FC /* DocumentReviewView.swift */,
 				2D6534772DF6065400182A23 /* FileSystemView.swift */,
 			);
 			path = Views;
@@ -141,6 +152,7 @@
 				2D6534792DF6065400182A23 /* Assets.xcassets */,
 				2D65347A2DF6065400182A23 /* ClerkApp.swift */,
 				2D65347B2DF6065400182A23 /* Info.plist */,
+				2D5E28592DF6F08700E013FC /* Secrets.plist */,
 			);
 			path = Clerk;
 			sourceTree = "<group>";
@@ -299,6 +311,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2D5E285A2DF6F09000E013FC /* Secrets.plist in Resources */,
 				2D65347D2DF6065400182A23 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -324,14 +337,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2D5E28542DF6ED6C00E013FC /* DocumentReviewView.swift in Sources */,
 				2D65347F2DF6065400182A23 /* FileItem.swift in Sources */,
 				2D6534802DF6065400182A23 /* FolderItem.swift in Sources */,
+				2D5E28562DF6ED7E00E013FC /* ScannedDocument.swift in Sources */,
 				2D6534812DF6065400182A23 /* FileService.swift in Sources */,
 				2D6534822DF6065400182A23 /* PDFGenerator.swift in Sources */,
 				2D6534832DF6065400182A23 /* FileRowView.swift in Sources */,
 				2D6534842DF6065400182A23 /* FolderRowView.swift in Sources */,
 				2D6534852DF6065400182A23 /* QuickLookPreview.swift in Sources */,
 				2D6534862DF6065400182A23 /* ContentView.swift in Sources */,
+				2D5E28582DF6ED8D00E013FC /* LLMService.swift in Sources */,
 				2D6534872DF6065400182A23 /* FileSystemView.swift in Sources */,
 				2D6534882DF6065400182A23 /* ClerkApp.swift in Sources */,
 			);

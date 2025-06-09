@@ -18,6 +18,9 @@ struct FileSystemView: View {
     @State private var showingDeleteConfirmationAlert = false
     @State private var folderMarkedForDeletion: FolderItem?
     @State private var isShowingScanner = false
+    @State private var currentDocument: ScannedDocument?
+    @State private var isShowingDocumentReview = false
+    @State private var isProcessingDocument = false
     
     // Multi-select state
     @State private var isMultiSelectMode = false
@@ -201,11 +204,45 @@ struct FileSystemView: View {
             DocumentScannerView { result in
                 switch result {
                 case .success(let scannedImages):
-                    let filename = "Scan_\(Int(Date().timeIntervalSince1970)).pdf"
-                    PDFGenerator.generatePDF(from: scannedImages, fileName: filename, parent: currentFolder, modelContext: modelContext)
+                    Task {
+                        isProcessingDocument = true
+                        let document = ScannedDocument(images: scannedImages)
+                        currentDocument = document
+                        
+                        do {
+                            let (summary, title) = try await LLMService.analyzeDocument(images: scannedImages)
+                            document.llmSummary = summary
+                            document.suggestedTitle = title
+                            document.processingStatus = .completed
+                            isShowingDocumentReview = true
+                        } catch {
+                            document.processingStatus = .failed(error)
+                            print("LLM processing failed: \(error.localizedDescription)")
+                        }
+                        
+                        isProcessingDocument = false
+                    }
                 case .failure(let error):
                     print("Scan failed: \(error.localizedDescription)")
                 }
+            }
+        }
+        .sheet(isPresented: $isShowingDocumentReview) {
+            if let document = currentDocument {
+                DocumentReviewView(document: document, parent: currentFolder)
+            }
+        }
+        .overlay {
+            if isProcessingDocument {
+                VStack {
+                    ProgressView("Analyzing document...")
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 10)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black.opacity(0.4))
             }
         }
         .sheet(isPresented: $isShowingQuickLook) {
@@ -247,3 +284,4 @@ struct FileSystemView: View {
         offsets.map { items[$0] }.forEach(requestDeleteConfirmation)
     }
 }
+
