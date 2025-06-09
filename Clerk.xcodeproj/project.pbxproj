@@ -3,24 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2D5E28542DF6ED6C00E013FC /* DocumentReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5E28532DF6ED6C00E013FC /* DocumentReviewView.swift */; };
-		2D5E28562DF6ED7E00E013FC /* ScannedDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5E28552DF6ED7E00E013FC /* ScannedDocument.swift */; };
-		2D5E28582DF6ED8D00E013FC /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5E28572DF6ED8D00E013FC /* LLMService.swift */; };
 		2D5E285A2DF6F09000E013FC /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2D5E28592DF6F08700E013FC /* Secrets.plist */; };
 		2D65347D2DF6065400182A23 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2D6534792DF6065400182A23 /* Assets.xcassets */; };
-		2D65347F2DF6065400182A23 /* FileItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65346C2DF6065400182A23 /* FileItem.swift */; };
-		2D6534802DF6065400182A23 /* FolderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65346D2DF6065400182A23 /* FolderItem.swift */; };
-		2D6534812DF6065400182A23 /* FileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65346F2DF6065400182A23 /* FileService.swift */; };
-		2D6534822DF6065400182A23 /* PDFGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534702DF6065400182A23 /* PDFGenerator.swift */; };
-		2D6534832DF6065400182A23 /* FileRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534722DF6065400182A23 /* FileRowView.swift */; };
-		2D6534842DF6065400182A23 /* FolderRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534732DF6065400182A23 /* FolderRowView.swift */; };
-		2D6534852DF6065400182A23 /* QuickLookPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534742DF6065400182A23 /* QuickLookPreview.swift */; };
-		2D6534862DF6065400182A23 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534762DF6065400182A23 /* ContentView.swift */; };
-		2D6534872DF6065400182A23 /* FileSystemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534772DF6065400182A23 /* FileSystemView.swift */; };
 		2D6534882DF6065400182A23 /* ClerkApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65347A2DF6065400182A23 /* ClerkApp.swift */; };
 		2D65348E2DF6065800182A23 /* ClerkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534892DF6065800182A23 /* ClerkTests.swift */; };
 		2D65348F2DF6065800182A23 /* FileItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65348A2DF6065800182A23 /* FileItemTests.swift */; };
@@ -49,19 +37,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		2D5E28532DF6ED6C00E013FC /* DocumentReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentReviewView.swift; sourceTree = "<group>"; };
-		2D5E28552DF6ED7E00E013FC /* ScannedDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannedDocument.swift; sourceTree = "<group>"; };
-		2D5E28572DF6ED8D00E013FC /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
 		2D5E28592DF6F08700E013FC /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
-		2D65346C2DF6065400182A23 /* FileItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileItem.swift; sourceTree = "<group>"; };
-		2D65346D2DF6065400182A23 /* FolderItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderItem.swift; sourceTree = "<group>"; };
-		2D65346F2DF6065400182A23 /* FileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileService.swift; sourceTree = "<group>"; };
-		2D6534702DF6065400182A23 /* PDFGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFGenerator.swift; sourceTree = "<group>"; };
-		2D6534722DF6065400182A23 /* FileRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileRowView.swift; sourceTree = "<group>"; };
-		2D6534732DF6065400182A23 /* FolderRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderRowView.swift; sourceTree = "<group>"; };
-		2D6534742DF6065400182A23 /* QuickLookPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookPreview.swift; sourceTree = "<group>"; };
-		2D6534762DF6065400182A23 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		2D6534772DF6065400182A23 /* FileSystemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystemView.swift; sourceTree = "<group>"; };
 		2D6534792DF6065400182A23 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2D65347A2DF6065400182A23 /* ClerkApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClerkApp.swift; sourceTree = "<group>"; };
 		2D65347B2DF6065400182A23 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -75,6 +51,12 @@
 		2D7A83352DECA6E1004319F8 /* ClerkTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClerkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D7A833F2DECA6E1004319F8 /* ClerkUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClerkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		2DDA287E2DF75BF700B24080 /* Models */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Models; sourceTree = "<group>"; };
+		2DDA28852DF75BFB00B24080 /* Services */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Services; sourceTree = "<group>"; };
+		2DDA28902DF75BFE00B24080 /* Views */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Views; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		2D7A83252DECA6E0004319F8 /* Frameworks */ = {
@@ -102,53 +84,12 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		2D65346E2DF6065400182A23 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				2D5E28552DF6ED7E00E013FC /* ScannedDocument.swift */,
-				2D65346C2DF6065400182A23 /* FileItem.swift */,
-				2D65346D2DF6065400182A23 /* FolderItem.swift */,
-			);
-			path = Models;
-			sourceTree = "<group>";
-		};
-		2D6534712DF6065400182A23 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				2D65346F2DF6065400182A23 /* FileService.swift */,
-				2D5E28572DF6ED8D00E013FC /* LLMService.swift */,
-				2D6534702DF6065400182A23 /* PDFGenerator.swift */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		2D6534752DF6065400182A23 /* Components */ = {
-			isa = PBXGroup;
-			children = (
-				2D6534722DF6065400182A23 /* FileRowView.swift */,
-				2D6534732DF6065400182A23 /* FolderRowView.swift */,
-				2D6534742DF6065400182A23 /* QuickLookPreview.swift */,
-			);
-			path = Components;
-			sourceTree = "<group>";
-		};
-		2D6534782DF6065400182A23 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				2D6534752DF6065400182A23 /* Components */,
-				2D6534762DF6065400182A23 /* ContentView.swift */,
-				2D5E28532DF6ED6C00E013FC /* DocumentReviewView.swift */,
-				2D6534772DF6065400182A23 /* FileSystemView.swift */,
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
 		2D65347C2DF6065400182A23 /* Clerk */ = {
 			isa = PBXGroup;
 			children = (
-				2D65346E2DF6065400182A23 /* Models */,
-				2D6534712DF6065400182A23 /* Services */,
-				2D6534782DF6065400182A23 /* Views */,
+				2DDA287E2DF75BF700B24080 /* Models */,
+				2DDA28852DF75BFB00B24080 /* Services */,
+				2DDA28902DF75BFE00B24080 /* Views */,
 				2D6534792DF6065400182A23 /* Assets.xcassets */,
 				2D65347A2DF6065400182A23 /* ClerkApp.swift */,
 				2D65347B2DF6065400182A23 /* Info.plist */,
@@ -211,6 +152,11 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2DDA287E2DF75BF700B24080 /* Models */,
+				2DDA28852DF75BFB00B24080 /* Services */,
+				2DDA28902DF75BFE00B24080 /* Views */,
 			);
 			name = Clerk;
 			packageProductDependencies = (
@@ -337,18 +283,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2D5E28542DF6ED6C00E013FC /* DocumentReviewView.swift in Sources */,
-				2D65347F2DF6065400182A23 /* FileItem.swift in Sources */,
-				2D6534802DF6065400182A23 /* FolderItem.swift in Sources */,
-				2D5E28562DF6ED7E00E013FC /* ScannedDocument.swift in Sources */,
-				2D6534812DF6065400182A23 /* FileService.swift in Sources */,
-				2D6534822DF6065400182A23 /* PDFGenerator.swift in Sources */,
-				2D6534832DF6065400182A23 /* FileRowView.swift in Sources */,
-				2D6534842DF6065400182A23 /* FolderRowView.swift in Sources */,
-				2D6534852DF6065400182A23 /* QuickLookPreview.swift in Sources */,
-				2D6534862DF6065400182A23 /* ContentView.swift in Sources */,
-				2D5E28582DF6ED8D00E013FC /* LLMService.swift in Sources */,
-				2D6534872DF6065400182A23 /* FileSystemView.swift in Sources */,
 				2D6534882DF6065400182A23 /* ClerkApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
