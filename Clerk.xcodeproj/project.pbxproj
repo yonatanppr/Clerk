@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2D5E285A2DF6F09000E013FC /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2D5E28592DF6F08700E013FC /* Secrets.plist */; };
 		2D65347D2DF6065400182A23 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2D6534792DF6065400182A23 /* Assets.xcassets */; };
 		2D6534882DF6065400182A23 /* ClerkApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65347A2DF6065400182A23 /* ClerkApp.swift */; };
 		2D65348E2DF6065800182A23 /* ClerkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534892DF6065800182A23 /* ClerkTests.swift */; };
@@ -16,6 +15,7 @@
 		2D6534912DF6065800182A23 /* FolderItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65348C2DF6065800182A23 /* FolderItemTests.swift */; };
 		2D6534952DF6065A00182A23 /* ClerkUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534922DF6065A00182A23 /* ClerkUITests.swift */; };
 		2D6534962DF6065A00182A23 /* ClerkUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6534932DF6065A00182A23 /* ClerkUITestsLaunchTests.swift */; };
+		2D7319212DF889610073FF7E /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2D7319202DF8895A0073FF7E /* Secrets.plist */; };
 		2DA550672DF36F5400C1AC0C /* DocumentScannerView in Frameworks */ = {isa = PBXBuildFile; productRef = 2DA550662DF36F5400C1AC0C /* DocumentScannerView */; };
 /* End PBXBuildFile section */
 
@@ -37,7 +37,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		2D5E28592DF6F08700E013FC /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
 		2D6534792DF6065400182A23 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2D65347A2DF6065400182A23 /* ClerkApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClerkApp.swift; sourceTree = "<group>"; };
 		2D65347B2DF6065400182A23 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -47,6 +46,7 @@
 		2D65348C2DF6065800182A23 /* FolderItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderItemTests.swift; sourceTree = "<group>"; };
 		2D6534922DF6065A00182A23 /* ClerkUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClerkUITests.swift; sourceTree = "<group>"; };
 		2D6534932DF6065A00182A23 /* ClerkUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClerkUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		2D7319202DF8895A0073FF7E /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
 		2D7A83282DECA6E0004319F8 /* Clerk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clerk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D7A83352DECA6E1004319F8 /* ClerkTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClerkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D7A833F2DECA6E1004319F8 /* ClerkUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClerkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -93,7 +93,7 @@
 				2D6534792DF6065400182A23 /* Assets.xcassets */,
 				2D65347A2DF6065400182A23 /* ClerkApp.swift */,
 				2D65347B2DF6065400182A23 /* Info.plist */,
-				2D5E28592DF6F08700E013FC /* Secrets.plist */,
+				2D7319202DF8895A0073FF7E /* Secrets.plist */,
 			);
 			path = Clerk;
 			sourceTree = "<group>";
@@ -257,7 +257,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2D5E285A2DF6F09000E013FC /* Secrets.plist in Resources */,
+				2D7319212DF889610073FF7E /* Secrets.plist in Resources */,
 				2D65347D2DF6065400182A23 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

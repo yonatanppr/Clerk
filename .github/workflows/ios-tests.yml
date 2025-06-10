@@ -19,6 +19,15 @@ jobs:
         with:
           xcode-version: 'latest'
 
+      # Reads content from the SECRETS_PLIST_CONTENT secret in repo settings
+      - name: Create Secrets.plist
+        env:
+          SECRETS_CONTENT: ${{ secrets.SECRETS_PLIST_CONTENT }}
+        run: |
+          echo "Creating Secrets.plist..."
+          echo "$SECRETS_CONTENT" > Clerk/Clerk/Secrets.plist
+          echo "Secrets.plist created successfully."
+      
       - name: Run tests on a standard simulator
         run: |
           # Directly specify a standard simulator. This is often more reliable in CI.
