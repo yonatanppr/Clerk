@@ -25,7 +25,7 @@ jobs:
           SECRETS_CONTENT: ${{ secrets.SECRETS_PLIST_CONTENT }}
         run: |
           echo "Creating Secrets.plist..."
-          echo "$SECRETS_CONTENT" > Clerk/Clerk/Secrets.plist
+          echo "$SECRETS_CONTENT" > Clerk/Secrets.plist
           echo "Secrets.plist created successfully."
       
       - name: Run tests on a standard simulator
