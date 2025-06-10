@@ -7,6 +7,9 @@ import QuickLook
 
 struct FileSystemView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query private var folders: [FolderItem]
+    @Query private var files: [FileItem]
+    
     let currentFolder: FolderItem?
     @Binding var navigationPath: NavigationPath // For programmatic navigation
     
@@ -31,24 +34,20 @@ struct FileSystemView: View {
     @State private var selectedFileURL: URL?
     @State private var isShowingQuickLook = false
     
-    // Query for subfolders and files
-    @Query var items: [FolderItem]
-    @Query var files: [FileItem]
-    
     init(currentFolder: FolderItem?, navigationPath: Binding<NavigationPath>) {
         self.currentFolder = currentFolder
         self._navigationPath = navigationPath
 
         if let currentFolder {
             let currentFolderID = currentFolder.persistentModelID
-            self._items = Query(filter: #Predicate<FolderItem> { folderItem in
+            self._folders = Query(filter: #Predicate<FolderItem> { folderItem in
                 folderItem.parent?.persistentModelID == currentFolderID
             }, sort: [SortDescriptor(\FolderItem.name)])
             self._files = Query(filter: #Predicate<FileItem> { fileItem in
                 fileItem.parent?.persistentModelID == currentFolderID
             }, sort: [SortDescriptor(\FileItem.name)])
         } else {
-            self._items = Query(filter: #Predicate<FolderItem> { folderItem in
+            self._folders = Query(filter: #Predicate<FolderItem> { folderItem in
                 folderItem.parent == nil
             }, sort: [SortDescriptor(\FolderItem.name)])
             self._files = Query(filter: #Predicate<FileItem> { fileItem in
@@ -85,7 +84,7 @@ struct FileSystemView: View {
             ZStack {
                 List {
                     Section(header: Text("Folders")) {
-                        ForEach(items) { folder in
+                        ForEach(folders) { folder in
                             FolderRowView(
                                 folder: folder,
                                 onRename: {
@@ -237,9 +236,15 @@ struct FileSystemView: View {
                         currentDocument = document
                         
                         do {
-                            let (summary, title) = try await LLMService.analyzeDocument(images: scannedImages)
+                            let (summary, title, folderSuggestion) = try await LLMService.analyzeDocument(
+                                images: scannedImages,
+                                existingFolders: Array(folders)
+                            )
                             document.llmSummary = summary
                             document.suggestedTitle = title
+                            document.suggestedFolder = folderSuggestion.suggestedFolder
+                            document.shouldCreateNewFolder = folderSuggestion.shouldCreateNewFolder
+                            document.newFolderName = folderSuggestion.newFolderName
                             document.processingStatus = .completed
                             isShowingDocumentReview = true
                         } catch {
@@ -257,6 +262,7 @@ struct FileSystemView: View {
         .sheet(isPresented: $isShowingDocumentReview) {
             if let document = currentDocument {
                 DocumentReviewView(document: document, parent: currentFolder)
+                    .modelContext(modelContext)
             }
         }
         .overlay {
@@ -305,6 +311,6 @@ struct FileSystemView: View {
     }
     
     private func deleteFoldersAtIndexSet(offsets: IndexSet) {
-        offsets.map { items[$0] }.forEach(requestDeleteConfirmation)
+        offsets.map { folders[$0] }.forEach(requestDeleteConfirmation)
     }
 }

@@ -6,6 +6,9 @@ class ScannedDocument: ObservableObject {
     let images: [UIImage]
     @Published var llmSummary: String
     @Published var suggestedTitle: String
+    @Published var suggestedFolder: String?
+    @Published var shouldCreateNewFolder: Bool
+    @Published var newFolderName: String?
     @Published var processingStatus: ProcessingStatus
     
     init(images: [UIImage]) {
@@ -13,6 +16,9 @@ class ScannedDocument: ObservableObject {
         self.images = images
         self.llmSummary = ""
         self.suggestedTitle = ""
+        self.suggestedFolder = nil
+        self.shouldCreateNewFolder = false
+        self.newFolderName = nil
         self.processingStatus = .processing
     }
     
