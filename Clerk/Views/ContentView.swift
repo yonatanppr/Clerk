@@ -6,7 +6,10 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack(path: $navigationPath) { // 2. Use the path in NavigationStack
-            FileSystemView(currentFolder: nil, navigationPath: $navigationPath) // 3. Pass the binding
+            FileSystemView(currentFolder: nil, navigationPath: $navigationPath) // 3. Pass the binding to the initial view
+                .navigationDestination(for: FolderItem.self) { folder in
+                    FileSystemView(currentFolder: folder, navigationPath: $navigationPath)
+                }
         }
     }
 }

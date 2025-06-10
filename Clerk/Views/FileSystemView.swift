@@ -277,9 +277,6 @@ struct FileSystemView: View {
                 QuickLookPreview(url: url)
             }
         }
-        .navigationDestination(for: FolderItem.self) { folder in
-            FileSystemView(currentFolder: folder, navigationPath: $navigationPath)
-        }
     }
     
     private func createFolder(name: String) {
