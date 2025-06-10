@@ -1,9 +1,15 @@
 import SwiftUI
 
 struct ContentView: View {
+    // 1. Add a @State variable for the NavigationPath
+    @State private var navigationPath = NavigationPath()
+
     var body: some View {
-        NavigationStack {
-            FileSystemView(currentFolder: nil) // Start at the root (nil currentFolder)
+        NavigationStack(path: $navigationPath) { // 2. Use the path in NavigationStack
+            FileSystemView(currentFolder: nil, navigationPath: $navigationPath) // 3. Pass the binding to the initial view
+                .navigationDestination(for: FolderItem.self) { folder in
+                    FileSystemView(currentFolder: folder, navigationPath: $navigationPath)
+                }
         }
     }
 }

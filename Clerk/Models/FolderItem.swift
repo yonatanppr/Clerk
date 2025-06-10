@@ -21,4 +21,15 @@ final class FolderItem {
         self.creationDate = creationDate
         self.parent = parent
     }
+
+    // Helper function to get the path from root to this folder
+    func getPath() -> [FolderItem] {
+        var path: [FolderItem] = []
+        var currentItem: FolderItem? = self
+        while let item = currentItem {
+            path.insert(item, at: 0) // Prepend to get the correct order: [Root, ..., Self]
+            currentItem = item.parent
+        }
+        return path
+    }
 }

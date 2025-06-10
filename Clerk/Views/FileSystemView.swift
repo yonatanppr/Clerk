@@ -8,6 +8,7 @@ import QuickLook
 struct FileSystemView: View {
     @Environment(\.modelContext) private var modelContext
     let currentFolder: FolderItem?
+    @Binding var navigationPath: NavigationPath // For programmatic navigation
     
     // State for managing alerts
     @State private var showingCreateFolderAlert = false
@@ -34,9 +35,10 @@ struct FileSystemView: View {
     @Query var items: [FolderItem]
     @Query var files: [FileItem]
     
-    init(currentFolder: FolderItem?) {
+    init(currentFolder: FolderItem?, navigationPath: Binding<NavigationPath>) {
         self.currentFolder = currentFolder
-        
+        self._navigationPath = navigationPath
+
         if let currentFolder {
             let currentFolderID = currentFolder.persistentModelID
             self._items = Query(filter: #Predicate<FolderItem> { folderItem in
@@ -56,73 +58,98 @@ struct FileSystemView: View {
     }
     
     var body: some View {
-        ZStack {
-            List {
-                Section(header: Text("Folders")) {
-                    ForEach(items) { folder in
-                        FolderRowView(
-                            folder: folder,
-                            onRename: {
-                                folderToRename = folder
-                                renamedFolderName = folder.name
-                                showingRenameFolderAlert = true
-                            },
-                            onDelete: {
-                                requestDeleteConfirmation(for: folder)
+        VStack(spacing: 0) { // Use a VStack to arrange BreadcrumbView and the List
+            // Display BreadcrumbView if we are inside a folder
+            if let folder = currentFolder {
+                BreadcrumbView(
+                    path: folder.getPath(),
+                    onNavigate: { tappedFolder in
+                        // Navigate back to the tapped folder
+                        let fullCurrentPath = folder.getPath()
+                        if let targetIndex = fullCurrentPath.firstIndex(where: { $0.id == tappedFolder.id }) {
+                            let itemsToPop = (fullCurrentPath.count - 1) - targetIndex
+                            if itemsToPop > 0 {
+                                navigationPath.removeLast(itemsToPop)
                             }
-                        )
+                        }
+                    },
+                    onNavigateToRoot: {
+                        // Navigate to the root by clearing the navigation path
+                        navigationPath.removeLast(navigationPath.count)
                     }
-                    .onDelete(perform: deleteFoldersAtIndexSet)
-                }
-                
-                Section(header: Text("Files")) {
-                    ForEach(files) { file in
-                        FileRowView(
-                            file: file,
-                            isSelected: selectedFiles.contains(file),
-                            onTap: {
-                                if isMultiSelectMode {
-                                    if selectedFiles.contains(file) {
-                                        selectedFiles.remove(file)
+                )
+                .padding(.horizontal) // Add some horizontal padding around the breadcrumb bar
+                .padding(.bottom, 4) // Space between breadcrumbs and list
+            }
+
+            ZStack {
+                List {
+                    Section(header: Text("Folders")) {
+                        ForEach(items) { folder in
+                            FolderRowView(
+                                folder: folder,
+                                onRename: {
+                                    folderToRename = folder
+                                    renamedFolderName = folder.name
+                                    showingRenameFolderAlert = true
+                                },
+                                onDelete: {
+                                    requestDeleteConfirmation(for: folder)
+                                }
+                            )
+                        }
+                        .onDelete(perform: deleteFoldersAtIndexSet)
+                    }
+                    
+                    Section(header: Text("Files")) {
+                        ForEach(files) { file in
+                            FileRowView(
+                                file: file,
+                                isSelected: selectedFiles.contains(file),
+                                onTap: {
+                                    if isMultiSelectMode {
+                                        if selectedFiles.contains(file) {
+                                            selectedFiles.remove(file)
+                                        } else {
+                                            selectedFiles.insert(file)
+                                        }
                                     } else {
-                                        selectedFiles.insert(file)
-                                    }
-                                } else {
-                                    if FileManager.default.fileExists(atPath: file.fullURL.path) {
-                                        print("Opening file at: \(file.fullURL.path)")
-                                        selectedFileURL = file.fullURL
-                                        isShowingQuickLook = true
-                                    } else {
-                                        print("File does not exist at path: \(file.fullURL.path)")
+                                        if FileManager.default.fileExists(atPath: file.fullURL.path) {
+                                            print("Opening file at: \(file.fullURL.path)")
+                                            selectedFileURL = file.fullURL
+                                            isShowingQuickLook = true
+                                        } else {
+                                            print("File does not exist at path: \(file.fullURL.path)")
+                                        }
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
-            }
-            
-            VStack {
-                Spacer()
-                HStack {
+                
+                VStack {
                     Spacer()
-                    Button {
-                        isShowingScanner = true
-                    } label: {
-                        Image(systemName: "camera.fill")
-                            .font(.system(size: 28, weight: .medium))
-                            .frame(width: 60, height: 60)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .clipShape(Circle())
-                            .shadow(color: .gray.opacity(0.6), radius: 8, x: 0, y: 4)
+                    HStack {
+                        Spacer()
+                        Button {
+                            isShowingScanner = true
+                        } label: {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 28, weight: .medium))
+                                .frame(width: 60, height: 60)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .clipShape(Circle())
+                                .shadow(color: .gray.opacity(0.6), radius: 8, x: 0, y: 4)
+                        }
+                        .accessibilityLabel("Scan new document")
+                        Spacer()
                     }
-                    .accessibilityLabel("Scan new document")
-                    Spacer()
+                    .padding(.bottom, 40)
                 }
-                .padding(.bottom, 40)
+                .ignoresSafeArea(.keyboard)
             }
-            .ignoresSafeArea(.keyboard)
         }
         .navigationTitle(currentFolder?.name ?? "Clerk")
         .toolbar {
@@ -250,9 +277,6 @@ struct FileSystemView: View {
                 QuickLookPreview(url: url)
             }
         }
-        .navigationDestination(for: FolderItem.self) { folder in
-            FileSystemView(currentFolder: folder)
-        }
     }
     
     private func createFolder(name: String) {
@@ -284,4 +308,3 @@ struct FileSystemView: View {
         offsets.map { items[$0] }.forEach(requestDeleteConfirmation)
     }
 }
-
