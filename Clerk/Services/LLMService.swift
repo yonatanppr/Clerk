@@ -76,7 +76,7 @@ struct LLMService {
         }
     }
     
-    static func analyzeDocument(images: [UIImage], existingFolders: [FolderItem]) async throws -> (summary: String, title: String, folderSuggestion: FolderSuggestion) {
+    static func analyzeDocument(images: [UIImage], existingFolders: [FolderItem]) async throws -> (summary: String, title: String, folderSuggestion: FolderSuggestion, documentType: ScannedDocument.DocumentType, requiredAction: ScannedDocument.RequiredAction?) {
         let apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
         
         // Convert images to base64 strings
@@ -101,19 +101,33 @@ struct LLMService {
         1. A concise summary of the content
         2. A suitable title for the document
         3. A suggestion for where to store this document based on the existing folder structure
-        
+        4. The type of document (spam, informational, or action_required)
+        5. If action is required, provide details about the action
+
         Current folder structure:
         \(folderStructure)
         
         If you find a suitable existing folder, suggest it. If no existing folder is appropriate, suggest creating a new one with a descriptive name.
         
+        For action detection:
+        - If the document is spam or an advertisement with no required action, set documentType to "spam"
+        - If the document contains important information but no required action, set documentType to "informational"
+        - If the document requires any action (payment, form submission, appointment, etc.), set documentType to "action_required" and provide action details
+        
         Format your response as JSON with these fields:
         {
-            "summary": "your summary here",
+            "summary": "your short summary here",
             "title": "your title here",
             "suggestedFolder": "path/to/existing/folder or null if no suitable folder",
             "shouldCreateNewFolder": true/false,
-            "newFolderName": "suggested new folder name or null if not creating new folder"
+            "newFolderName": "suggested new folder name or null if not creating new folder",
+            "documentType": "spam/informational/action_required",
+            "requiredAction": {
+                "actionType": "payment/form/appointment/other",
+                "description": "short description of the required action",
+                "dueDate": "YYYY-MM-DD or null if no due date",
+                "priority": "high/medium/low"
+            } or null if no action required
         }
         """
         
@@ -195,7 +209,27 @@ struct LLMService {
                 newFolderName: llmResponse.newFolderName
             )
             
-            return (llmResponse.summary, llmResponse.title, folderSuggestion)
+            // Convert document type
+            let documentType = ScannedDocument.DocumentType(rawValue: llmResponse.documentType) ?? .unknown
+            
+            // Convert required action if present
+            let requiredAction: ScannedDocument.RequiredAction?
+            if let action = llmResponse.requiredAction {
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd"
+                let dueDate = action.dueDate.flatMap { dateFormatter.date(from: $0) }
+                
+                requiredAction = ScannedDocument.RequiredAction(
+                    actionType: ScannedDocument.RequiredAction.ActionType(rawValue: action.actionType) ?? .other,
+                    description: action.description,
+                    dueDate: dueDate,
+                    priority: ScannedDocument.RequiredAction.Priority(rawValue: action.priority) ?? .medium
+                )
+            } else {
+                requiredAction = nil
+            }
+            
+            return (llmResponse.summary, llmResponse.title, folderSuggestion, documentType, requiredAction)
         } catch let error as LLMError {
             throw error
         } catch {
@@ -234,6 +268,15 @@ private struct LLMResponse: Codable {
     let suggestedFolder: String?
     let shouldCreateNewFolder: Bool
     let newFolderName: String?
+    let documentType: String
+    let requiredAction: ActionResponse?
+    
+    struct ActionResponse: Codable {
+        let actionType: String
+        let description: String
+        let dueDate: String?
+        let priority: String
+    }
 }
 
 struct FolderSuggestion {

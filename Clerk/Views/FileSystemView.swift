@@ -236,7 +236,7 @@ struct FileSystemView: View {
                         currentDocument = document
                         
                         do {
-                            let (summary, title, folderSuggestion) = try await LLMService.analyzeDocument(
+                            let (summary, title, folderSuggestion, documentType, requiredAction) = try await LLMService.analyzeDocument(
                                 images: scannedImages,
                                 existingFolders: Array(folders)
                             )
@@ -245,6 +245,8 @@ struct FileSystemView: View {
                             document.suggestedFolder = folderSuggestion.suggestedFolder
                             document.shouldCreateNewFolder = folderSuggestion.shouldCreateNewFolder
                             document.newFolderName = folderSuggestion.newFolderName
+                            document.documentType = documentType
+                            document.requiredAction = requiredAction
                             document.processingStatus = .completed
                             isShowingDocumentReview = true
                         } catch {
