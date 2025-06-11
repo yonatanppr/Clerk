@@ -8,5 +8,18 @@
 	</array>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Clerk needs access to your calendar to add events for required actions from your documents.</string>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeDescription</key>
+			<string>Clerk File Item Drag</string>
+			<key>UTTypeIdentifier</key>
+			<string>clerkapp.Clerk.fileitemdrag</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

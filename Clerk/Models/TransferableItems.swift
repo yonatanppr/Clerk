@@ -5,7 +5,7 @@ import CoreTransferable
 // 1. Define a custom UTType for our draggable FileItem.
 // This helps identify the type of data being dragged.
 extension UTType {
-    static var fileItemDrag = UTType(exportedAs: "com.yourbundleidentifier.Clerk.fileitemdrag")
+    static var fileItemDrag = UTType(exportedAs: "clerkapp.Clerk.fileitemdrag")
 }
 
 // 2. Create a struct to wrap the FileItem's PersistentIdentifier.
