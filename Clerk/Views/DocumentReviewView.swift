@@ -22,6 +22,7 @@ struct DocumentReviewView: View {
     @State private var calendarEventDate = Date()
     @State private var showingCalendarAccessDenied = false
     @State private var showingCalendarPermissionRequest = false
+    @State private var showingDiscardAlert = false
     
     private let eventStore = EKEventStore()
     
@@ -119,6 +120,13 @@ struct DocumentReviewView: View {
                         }
                     }
                     .disabled(isSaving)
+                    
+                    Button(role: .destructive) {
+                        showingDiscardAlert = true
+                    } label: {
+                        Text("Discard Document")
+                    }
+                    .disabled(isSaving)
                 }
             }
             .navigationTitle("Review Document")
@@ -126,7 +134,7 @@ struct DocumentReviewView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
-                        dismiss()
+                        showingDiscardAlert = true
                     }
                 }
             }
@@ -152,6 +160,14 @@ struct DocumentReviewView: View {
                 Button("Not Now", role: .cancel) { }
             } message: {
                 Text("Clerk needs access to your calendar to add events for required actions. Would you like to grant access now?")
+            }
+            .alert("Discard Document", isPresented: $showingDiscardAlert) {
+                Button("Discard", role: .destructive) {
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Are you sure you want to discard this document? This action cannot be undone.")
             }
             .sheet(isPresented: $showingCalendarAlert) {
                 NavigationView {
