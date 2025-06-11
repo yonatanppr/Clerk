@@ -20,7 +20,6 @@ struct FolderRowView: View {
             }
         }
         .padding(.vertical, 4) // Add some padding to make it a better drop target
-        .background(isTargeted ? Color.blue.opacity(0.2) : Color.clear) // Visual feedback
         .cornerRadius(5)
         .contentShape(Rectangle()) // Ensures the entire area can be a drop target
         .contextMenu {

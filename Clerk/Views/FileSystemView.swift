@@ -4,11 +4,15 @@ import SwiftData
 import DocumentScannerView
 import QuickLook
 
+class DragState: ObservableObject {
+    @Published var isDraggingOver = false
+}
 
 struct FileSystemView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var folders: [FolderItem]
     @Query private var files: [FileItem]
+    @StateObject private var dragState = DragState()
     
     let currentFolder: FolderItem?
     @Binding var navigationPath: NavigationPath // For programmatic navigation
@@ -140,6 +144,8 @@ struct FileSystemView: View {
                                             }
                                         }
                                     )
+                                    .environmentObject(dragState)
+                                    .listRowBackground(dragState.isDraggingOver ? Color.gray.opacity(0.1) : Color.clear)
                                 }
                             }
                         }
