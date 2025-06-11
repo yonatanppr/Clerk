@@ -34,11 +34,6 @@ struct FileSystemView: View {
     @State private var selectedFileURL: URL?
     @State private var isShowingQuickLook = false
 
-    // Drop state for the list itself (moving to current folder/root)
-    @State private var isListTargeted: Bool = false
-    @State private var showCannotMoveToListAlert = false
-    @State private var cannotMoveToListMessage = ""
-    
     init(currentFolder: FolderItem?, navigationPath: Binding<NavigationPath>) {
         self.currentFolder = currentFolder
         self._navigationPath = navigationPath
@@ -131,61 +126,7 @@ struct FileSystemView: View {
                         }
                     }
                 }
-                .background(isListTargeted ? Color.secondary.opacity(0.25) : Color.clear) // Visual feedback for drop target
-                .dropDestination(for: TransferableFileItemID.self) { droppedItems, location in
-                    guard let droppedItem = droppedItems.first else { return false }
-
-                    guard let fileToMove = modelContext.model(for: droppedItem.id) as? FileItem else {
-                        print("Error: Could not find FileItem with ID \(droppedItem.id) for list drop.")
-                        return false
-                    }
-
-                    // Determine the target parent: currentFolder or nil for root
-                    let targetParentFolderID = currentFolder?.persistentModelID
-                    let fileCurrentParentFolderID = fileToMove.parent?.persistentModelID
-
-                    // Check if the file is already in the target location
-                    if targetParentFolderID == fileCurrentParentFolderID {
-                        let folderName = currentFolder?.name ?? "root"
-                        cannotMoveToListMessage = "'\(fileToMove.name)' is already in '\(folderName)'."
-                        showCannotMoveToListAlert = true
-                        print(cannotMoveToListMessage)
-                        return false // Operation handled, no change needed
-                    }
-
-                    // --- Physical File Move ---
-                    let oldURL = fileToMove.fullURL
-                    let originalParent = fileToMove.parent // Store original parent for potential rollback
-
-                    // Tentatively assign the new parent to calculate the new URL
-                    fileToMove.parent = currentFolder
-                    let newURL = fileToMove.fullURL
-
-                    // Ensure the destination directory exists
-                    let destinationDirectory = newURL.deletingLastPathComponent()
-                    do {
-                        try FileManager.default.createDirectory(at: destinationDirectory, withIntermediateDirectories: true, attributes: nil)
-                    } catch {
-                        print("Error creating destination directory \(destinationDirectory): \(error)")
-                        fileToMove.parent = originalParent // Revert parent change
-                        // TODO: Show user alert about failure
-                        return false
-                    }
-
-                    do {
-                        try FileManager.default.moveItem(at: oldURL, to: newURL)
-                        print("Successfully moved file from '\(oldURL.path)' to '\(newURL.path)' (target: \(currentFolder?.name ?? "root"))")
-                        // Parent is already set correctly. SwiftData will save.
-                        return true
-                    } catch {
-                        print("Error moving file from '\(oldURL.path)' to '\(newURL.path)': \(error)")
-                        fileToMove.parent = originalParent // Revert parent change
-                        // TODO: Show user alert about failure
-                        return false
-                    }
-                } isTargeted: { targeting in
-                    isListTargeted = targeting
-                }
+                .background(Color.clear) // Remove the drop target background
 
                 
                 VStack {
@@ -287,12 +228,6 @@ struct FileSystemView: View {
         } message: {
             Text("Are you sure you want to delete \(selectedFiles.count) selected file(s)?")
         }
-        .alert("Cannot Move File", isPresented: $showCannotMoveToListAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(cannotMoveToListMessage)
-        }
-
         .sheet(isPresented: $isShowingScanner) {
             DocumentScannerView { result in
                 switch result {
