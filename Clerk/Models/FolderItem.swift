@@ -32,4 +32,14 @@ final class FolderItem {
         }
         return path
     }
+    
+    // Get all subfolders recursively
+    func getAllSubfolders() -> [FolderItem] {
+        var result: [FolderItem] = []
+        for subfolder in subfolders {
+            result.append(subfolder)
+            result.append(contentsOf: subfolder.getAllSubfolders())
+        }
+        return result
+    }
 }
