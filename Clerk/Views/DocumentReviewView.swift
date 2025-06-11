@@ -1,6 +1,7 @@
 import SwiftUI
 import PDFKit
 import SwiftData
+import EventKit
 
 struct DocumentReviewView: View {
     @ObservedObject var document: ScannedDocument
@@ -16,6 +17,13 @@ struct DocumentReviewView: View {
     @State private var shouldCreateNewFolder: Bool
     @State private var newFolderName: String
     @State private var showingFolderAlert = false
+    @State private var showingCalendarAlert = false
+    @State private var calendarEventTitle = ""
+    @State private var calendarEventDate = Date()
+    @State private var showingCalendarAccessDenied = false
+    @State private var showingCalendarPermissionRequest = false
+    
+    private let eventStore = EKEventStore()
     
     init(document: ScannedDocument, parent: FolderItem?) {
         self.document = document
@@ -24,6 +32,15 @@ struct DocumentReviewView: View {
         _editedTitle = State(initialValue: document.suggestedTitle)
         _shouldCreateNewFolder = State(initialValue: document.shouldCreateNewFolder)
         _newFolderName = State(initialValue: document.newFolderName ?? "")
+        
+        // Initialize calendar event title if there's a required action
+        if let action = document.requiredAction {
+            _calendarEventTitle = State(initialValue: action.description)
+            _calendarEventDate = State(initialValue: action.dueDate ?? Date())
+        } else {
+            _calendarEventTitle = State(initialValue: "")
+            _calendarEventDate = State(initialValue: Date())
+        }
     }
     
     var body: some View {
@@ -51,6 +68,29 @@ struct DocumentReviewView: View {
                 
                 Section("Title") {
                     TextField("Document Title", text: $editedTitle)
+                }
+                
+                Section("Document Type") {
+                    Text(document.documentType.rawValue.capitalized)
+                        .foregroundColor(documentTypeColor)
+                }
+                
+                if let action = document.requiredAction {
+                    Section("Required Action") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Type: \(action.actionType.rawValue.capitalized)")
+                            Text("Description: \(action.description)")
+                            if let dueDate = action.dueDate {
+                                Text("Due Date: \(dueDate.formatted(date: .long, time: .omitted))")
+                            }
+                            Text("Priority: \(action.priority.rawValue.capitalized)")
+                                .foregroundColor(priorityColor(action.priority))
+                        }
+                        
+                        Button("Add to Calendar") {
+                            checkCalendarAccess()
+                        }
+                    }
                 }
                 
                 Section("Storage Location") {
@@ -95,6 +135,49 @@ struct DocumentReviewView: View {
             } message: {
                 Text("Please enter a valid folder name")
             }
+            .alert("Calendar Access Denied", isPresented: $showingCalendarAccessDenied) {
+                Button("Open Settings", role: .none) {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Please enable calendar access in Settings to add events.")
+            }
+            .alert("Calendar Access Required", isPresented: $showingCalendarPermissionRequest) {
+                Button("Allow Access", role: .none) {
+                    requestCalendarAccess()
+                }
+                Button("Not Now", role: .cancel) { }
+            } message: {
+                Text("Clerk needs access to your calendar to add events for required actions. Would you like to grant access now?")
+            }
+            .sheet(isPresented: $showingCalendarAlert) {
+                NavigationView {
+                    Form {
+                        Section("Calendar Event") {
+                            TextField("Event Title", text: $calendarEventTitle)
+                            DatePicker("Date", selection: $calendarEventDate, displayedComponents: [.date])
+                        }
+                    }
+                    .navigationTitle("Add to Calendar")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button("Cancel") {
+                                showingCalendarAlert = false
+                            }
+                        }
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Add") {
+                                addToCalendar()
+                                showingCalendarAlert = false
+                            }
+                        }
+                    }
+                }
+            }
             .onAppear {
                 // Set up folder selection after view appears and model context is available
                 if let suggestedFolderPath = document.suggestedFolder {
@@ -116,6 +199,69 @@ struct DocumentReviewView: View {
                     }
                 }
             }
+        }
+    }
+    
+    private var documentTypeColor: Color {
+        switch document.documentType {
+        case .spam:
+            return .gray
+        case .informational:
+            return .blue
+        case .actionRequired:
+            return .red
+        case .unknown:
+            return .gray
+        }
+    }
+    
+    private func priorityColor(_ priority: ScannedDocument.RequiredAction.Priority) -> Color {
+        switch priority {
+        case .high:
+            return .red
+        case .medium:
+            return .orange
+        case .low:
+            return .green
+        }
+    }
+    
+    private func checkCalendarAccess() {
+        switch EKEventStore.authorizationStatus(for: .event) {
+        case .notDetermined:
+            showingCalendarPermissionRequest = true
+        case .restricted, .denied:
+            showingCalendarAccessDenied = true
+        case .authorized:
+            showingCalendarAlert = true
+        @unknown default:
+            showingCalendarAccessDenied = true
+        }
+    }
+    
+    private func requestCalendarAccess() {
+        eventStore.requestAccess(to: .event) { granted, error in
+            DispatchQueue.main.async {
+                if granted {
+                    showingCalendarAlert = true
+                } else {
+                    showingCalendarAccessDenied = true
+                }
+            }
+        }
+    }
+    
+    private func addToCalendar() {
+        let event = EKEvent(eventStore: eventStore)
+        event.title = calendarEventTitle
+        event.startDate = calendarEventDate
+        event.endDate = calendarEventDate.addingTimeInterval(3600) // 1 hour duration
+        event.calendar = eventStore.defaultCalendarForNewEvents
+        
+        do {
+            try eventStore.save(event, span: .thisEvent)
+        } catch {
+            print("Error saving event: \(error.localizedDescription)")
         }
     }
     

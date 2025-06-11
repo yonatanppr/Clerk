@@ -6,5 +6,7 @@
 	<array>
 		<dict/>
 	</array>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Clerk needs access to your calendar to add events for required actions from your documents.</string>
 </dict>
 </plist>
