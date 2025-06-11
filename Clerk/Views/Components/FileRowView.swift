@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct FileRowView: View {
     let file: FileItem
@@ -36,6 +37,18 @@ struct FileRowView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Are you sure you want to delete '\(file.name)'?")
+        }
+        .draggable(TransferableFileItemID(id: file.persistentModelID)) {
+            // Custom preview for the drag operation
+            HStack(spacing: 8) {
+                Image(systemName: "doc.richtext")
+                    .foregroundColor(.blue)
+                Text(file.name)
+            }
+            .padding(10)
+            .background(.regularMaterial) // Use a material background for the preview
+            .cornerRadius(8)
+            .shadow(radius: 3)
         }
     }
 }
