@@ -6,6 +6,8 @@
 	<array>
 		<dict/>
 	</array>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Clerk needs access to your calendar to add events for required actions from your documents.</string>
 	<key>UTExportedTypeDeclarations</key>
