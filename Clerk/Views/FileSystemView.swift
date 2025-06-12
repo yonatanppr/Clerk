@@ -4,14 +4,23 @@ import SwiftData
 import DocumentScannerView
 import QuickLook
 
+class DragState: ObservableObject {
+    @Published var isDraggingOver = false
+}
 
 struct FileSystemView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var folders: [FolderItem]
     @Query private var files: [FileItem]
+    @StateObject private var dragState = DragState()
     
     let currentFolder: FolderItem?
     @Binding var navigationPath: NavigationPath // For programmatic navigation
+    
+    // Add computed property to track empty state
+    private var isEmpty: Bool {
+        files.isEmpty
+    }
     
     // State for managing alerts
     @State private var showingCreateFolderAlert = false
@@ -33,7 +42,7 @@ struct FileSystemView: View {
     // QuickLook state
     @State private var selectedFileURL: URL?
     @State private var isShowingQuickLook = false
-    
+
     init(currentFolder: FolderItem?, navigationPath: Binding<NavigationPath>) {
         self.currentFolder = currentFolder
         self._navigationPath = navigationPath
@@ -82,53 +91,67 @@ struct FileSystemView: View {
             }
 
             ZStack {
-                List {
-                    Section(header: Text("Folders")) {
-                        ForEach(folders) { folder in
-                            FolderRowView(
-                                folder: folder,
-                                onRename: {
-                                    folderToRename = folder
-                                    renamedFolderName = folder.name
-                                    showingRenameFolderAlert = true
-                                },
-                                onDelete: {
-                                    requestDeleteConfirmation(for: folder)
+                VStack(spacing: 0) {
+                    List {
+                        if !folders.isEmpty {
+                            Section(header: Text("Folders")) {
+                                ForEach(folders) { folder in
+                                    FolderRowView(
+                                        folder: folder,
+                                        onRename: {
+                                            folderToRename = folder
+                                            renamedFolderName = folder.name
+                                            showingRenameFolderAlert = true
+                                        },
+                                        onDelete: {
+                                            requestDeleteConfirmation(for: folder)
+                                        }
+                                    )
                                 }
-                            )
+                                .onDelete(perform: deleteFoldersAtIndexSet)
+                            }
                         }
-                        .onDelete(perform: deleteFoldersAtIndexSet)
+                        
+                        if isEmpty {
+                            Section {
+                                DropView(currentFolder: currentFolder)
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowBackground(Color.clear)
+                            }
+                        }
+                        
+                        if !files.isEmpty {
+                            Section(header: Text("Files")) {
+                                ForEach(files) { file in
+                                    FileRowView(
+                                        file: file,
+                                        isSelected: selectedFiles.contains(file),
+                                        onTap: {
+                                            if isMultiSelectMode {
+                                                if selectedFiles.contains(file) {
+                                                    selectedFiles.remove(file)
+                                                } else {
+                                                    selectedFiles.insert(file)
+                                                }
+                                            } else {
+                                                if FileManager.default.fileExists(atPath: file.fullURL.path) {
+                                                    print("Opening file at: \(file.fullURL.path)")
+                                                    selectedFileURL = file.fullURL
+                                                    isShowingQuickLook = true
+                                                } else {
+                                                    print("File does not exist at path: \(file.fullURL.path)")
+                                                }
+                                            }
+                                        }
+                                    )
+                                    .environmentObject(dragState)
+                                    .listRowBackground(dragState.isDraggingOver ? Color.gray.opacity(0.1) : Color.clear)
+                                }
+                            }
+                        }
                     }
+                    .background(Color.clear)
                     
-                    Section(header: Text("Files")) {
-                        ForEach(files) { file in
-                            FileRowView(
-                                file: file,
-                                isSelected: selectedFiles.contains(file),
-                                onTap: {
-                                    if isMultiSelectMode {
-                                        if selectedFiles.contains(file) {
-                                            selectedFiles.remove(file)
-                                        } else {
-                                            selectedFiles.insert(file)
-                                        }
-                                    } else {
-                                        if FileManager.default.fileExists(atPath: file.fullURL.path) {
-                                            print("Opening file at: \(file.fullURL.path)")
-                                            selectedFileURL = file.fullURL
-                                            isShowingQuickLook = true
-                                        } else {
-                                            print("File does not exist at path: \(file.fullURL.path)")
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                VStack {
-                    Spacer()
                     HStack {
                         Spacer()
                         Button {
