@@ -22,6 +22,9 @@ struct DocumentReviewView: View {
     @State private var calendarEventDate = Date()
     @State private var showingCalendarAccessDenied = false
     @State private var showingCalendarPermissionRequest = false
+    @State private var showingDiscardAlert = false
+    @State private var selectedImageIndex = 0
+    @State private var isScrolling = false
     
     private let eventStore = EKEventStore()
     
@@ -33,7 +36,6 @@ struct DocumentReviewView: View {
         _shouldCreateNewFolder = State(initialValue: document.shouldCreateNewFolder)
         _newFolderName = State(initialValue: document.newFolderName ?? "")
         
-        // Initialize calendar event title if there's a required action
         if let action = document.requiredAction {
             _calendarEventTitle = State(initialValue: action.description)
             _calendarEventDate = State(initialValue: action.dueDate ?? Date())
@@ -45,88 +47,232 @@ struct DocumentReviewView: View {
     
     var body: some View {
         NavigationView {
-            Form {
-                Section("Document Preview") {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(document.images, id: \.self) { image in
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Document Preview Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Document Preview")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
+                        TabView(selection: $selectedImageIndex) {
+                            ForEach(Array(document.images.enumerated()), id: \.offset) { index, image in
                                 Image(uiImage: image)
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(height: 200)
-                                    .cornerRadius(8)
+                                    .frame(height: 300)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                                    .shadow(radius: 8)
+                                    .tag(index)
                             }
                         }
-                        .padding(.vertical, 8)
+                        .tabViewStyle(.page)
+                        .frame(height: 300)
+                        .onChange(of: selectedImageIndex) { _, _ in
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                isScrolling = true
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    isScrolling = false
+                                }
+                            }
+                        }
                     }
-                }
-                
-                Section("Summary") {
-                    TextEditor(text: $editedSummary)
-                        .frame(minHeight: 100)
-                }
-                
-                Section("Title") {
-                    TextField("Document Title", text: $editedTitle)
-                }
-                
-                Section("Document Type") {
-                    Text(document.documentType.rawValue.capitalized)
-                        .foregroundColor(documentTypeColor)
-                }
-                
-                if let action = document.requiredAction {
-                    Section("Required Action") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Type: \(action.actionType.rawValue.capitalized)")
-                            Text("Description: \(action.description)")
-                            if let dueDate = action.dueDate {
-                                Text("Due Date: \(dueDate.formatted(date: .long, time: .omitted))")
-                            }
-                            Text("Priority: \(action.priority.rawValue.capitalized)")
-                                .foregroundColor(priorityColor(action.priority))
-                        }
+                    .padding(.horizontal)
+                    
+                    // Summary Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Summary")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
                         
-                        Button("Add to Calendar") {
-                            checkCalendarAccess()
+                        TextEditor(text: $editedSummary)
+                            .frame(minHeight: 120)
+                            .padding(12)
+                            .background(Color(.systemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                            )
+                    }
+                    .padding(.horizontal)
+                    
+                    // Title Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Title")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
+                        TextField("Document Title", text: $editedTitle)
+                            .textFieldStyle(.roundedBorder)
+                            .padding(.horizontal, 4)
+                    }
+                    .padding(.horizontal)
+                    
+                    // Document Type Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Document Type")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
+                        HStack {
+                            Text(document.documentType.rawValue.capitalized)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(documentTypeColor)
+                                .clipShape(Capsule())
+                            
+                            Spacer()
                         }
                     }
-                }
-                
-                Section("Storage Location") {
-                    if shouldCreateNewFolder {
-                        TextField("New Folder Name", text: $newFolderName)
-                    } else {
-                        Picker("Select Folder", selection: $selectedFolder) {
-                            Text("None").tag(nil as FolderItem?)
-                            ForEach(folders) { folder in
-                                Text(folder.getPath().map { $0.name }.joined(separator: "/"))
-                                    .tag(folder as FolderItem?)
+                    .padding(.horizontal)
+                    
+                    if let action = document.requiredAction {
+                        // Required Action Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Required Action")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Image(systemName: "exclamationmark.circle.fill")
+                                        .foregroundColor(.red)
+                                    Text(action.actionType.rawValue.capitalized)
+                                        .font(.subheadline)
+                                        .foregroundColor(.red)
+                                }
+                                
+                                Text(action.description)
+                                    .font(.body)
+                                
+                                if let dueDate = action.dueDate {
+                                    HStack {
+                                        Image(systemName: "calendar")
+                                            .foregroundColor(.blue)
+                                        Text(dueDate.formatted(date: .long, time: .omitted))
+                                            .font(.subheadline)
+                                    }
+                                }
+                                
+                                HStack {
+                                    Image(systemName: "flag.fill")
+                                        .foregroundColor(priorityColor(action.priority))
+                                    Text(action.priority.rawValue.capitalized)
+                                        .font(.subheadline)
+                                        .foregroundColor(priorityColor(action.priority))
+                                }
+                                
+                                Button(action: { checkCalendarAccess() }) {
+                                    HStack {
+                                        Image(systemName: "calendar.badge.plus")
+                                        Text("Add to Calendar")
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
                             }
+                            .padding()
+                            .background(Color(.secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
+                        .padding(.horizontal)
                     }
                     
-                    Toggle("Create New Folder", isOn: $shouldCreateNewFolder)
-                }
-                
-                Section {
-                    Button(action: saveDocument) {
-                        if isSaving {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle())
-                        } else {
-                            Text("Save Document")
+                    // Storage Location Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Storage Location")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        
+                        VStack(spacing: 16) {
+                            if shouldCreateNewFolder {
+                                TextField("New Folder Name", text: $newFolderName)
+                                    .textFieldStyle(.roundedBorder)
+                                    .padding(.horizontal, 4)
+                            } else {
+                                Menu {
+                                    Button("None") {
+                                        selectedFolder = nil
+                                    }
+                                    
+                                    ForEach(folders) { folder in
+                                        Button(folder.getPath().map { $0.name }.joined(separator: "/")) {
+                                            selectedFolder = folder
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text(selectedFolder?.getPath().map { $0.name }.joined(separator: "/") ?? "Select Folder")
+                                            .foregroundColor(selectedFolder == nil ? .secondary : .primary)
+                                        Spacer()
+                                        Image(systemName: "chevron.down")
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding()
+                                    .background(Color(.secondarySystemBackground))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
+                            }
+                            
+                            Toggle("Create New Folder", isOn: $shouldCreateNewFolder)
+                                .tint(.blue)
                         }
                     }
-                    .disabled(isSaving)
+                    .padding(.horizontal)
+                    
+                    // Action Buttons
+                    VStack(spacing: 16) {
+                        Button(action: saveDocument) {
+                            HStack {
+                                if isSaving {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                } else {
+                                    Image(systemName: "square.and.arrow.down")
+                                    Text("Save Document")
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(isSaving ? Color.gray : Color.blue)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .disabled(isSaving)
+                        
+                        Button(role: .destructive) {
+                            showingDiscardAlert = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "trash")
+                                Text("Discard Document")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.red)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .disabled(isSaving)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
                 }
+                .padding(.vertical)
             }
             .navigationTitle("Review Document")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
-                        dismiss()
+                        showingDiscardAlert = true
                     }
                 }
             }
@@ -152,6 +298,14 @@ struct DocumentReviewView: View {
                 Button("Not Now", role: .cancel) { }
             } message: {
                 Text("Clerk needs access to your calendar to add events for required actions. Would you like to grant access now?")
+            }
+            .alert("Discard Document", isPresented: $showingDiscardAlert) {
+                Button("Discard", role: .destructive) {
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Are you sure you want to discard this document? This action cannot be undone.")
             }
             .sheet(isPresented: $showingCalendarAlert) {
                 NavigationView {
@@ -179,14 +333,11 @@ struct DocumentReviewView: View {
                 }
             }
             .onAppear {
-                // Set up folder selection after view appears and model context is available
                 if let suggestedFolderPath = document.suggestedFolder {
                     let folderNames = suggestedFolderPath.split(separator: "/")
                     if let firstFolderName = folderNames.first {
-                        // Find the root folder with this name
                         if let rootFolder = folders.first(where: { $0.name == String(firstFolderName) && $0.parent == nil }) {
                             var currentFolder = rootFolder
-                            // Navigate through the path
                             for folderName in folderNames.dropFirst() {
                                 if let nextFolder = currentFolder.subfolders.first(where: { $0.name == String(folderName) }) {
                                     currentFolder = nextFolder

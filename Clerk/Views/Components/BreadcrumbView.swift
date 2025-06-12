@@ -46,8 +46,6 @@ struct BreadcrumbView: View {
                             .fontWeight(.semibold)
                             .padding(.horizontal, 4)
                             .foregroundColor(.primary)
-                            .underline()
-                            .cornerRadius(5)
                     } else {
                         Button(action: {
                             onNavigate(folder)
@@ -72,8 +70,7 @@ struct BreadcrumbView: View {
             .padding(.horizontal) // Padding for the ends of the scrollable content
         }
         .frame(height: 30) // Give the breadcrumb bar a fixed height
-        .background(Color(.systemGray6).opacity(0.7)) // Optional: background color
-        .cornerRadius(8) // Optional: rounded corners
+        .cornerRadius(8)
         // Outer padding will be handled by the parent view (FileSystemView)
         .alert("Cannot Move File", isPresented: $showCannotMoveAlert) {
             Button("OK", role: .cancel) { }
