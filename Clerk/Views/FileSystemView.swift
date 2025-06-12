@@ -65,8 +65,42 @@ struct FileSystemView: View {
         }
     }
     
+    private var addFolderRow: some View {
+        Button {
+            newFolderName = ""
+            showingCreateFolderAlert = true
+        } label: {
+            HStack {
+                Image(systemName: "folder.badge.plus")
+                Text("Add Folder")
+            }
+            .foregroundColor(.blue)
+        }
+    }
+
     var body: some View {
-        VStack(spacing: 0) { // Use a VStack to arrange BreadcrumbView and the List
+        let folderSection: some View = Group {
+            if !folders.isEmpty {
+                Section(header: Text("Folders")) {
+                    ForEach(folders) { folder in
+                        FolderRowView(
+                            folder: folder,
+                            onRename: {
+                                folderToRename = folder
+                                renamedFolderName = folder.name
+                                showingRenameFolderAlert = true
+                            },
+                            onDelete: {
+                                requestDeleteConfirmation(for: folder)
+                            }
+                        )
+                    }
+                    addFolderRow
+                }
+            }
+        }
+
+        return VStack(spacing: 0) { // Use a VStack to arrange BreadcrumbView and the List
             // Display BreadcrumbView if we are inside a folder
             if let folder = currentFolder {
                 BreadcrumbView(
@@ -108,7 +142,8 @@ struct FileSystemView: View {
                                         }
                                     )
                                 }
-                                .onDelete(perform: deleteFoldersAtIndexSet)
+                                // Add Folder button row
+                                addFolderRow
                             }
                         }
                         
@@ -188,16 +223,17 @@ struct FileSystemView: View {
                 }
             }
             
-            ToolbarItem(placement: .navigationBarTrailing) {
-                if !isMultiSelectMode {
-                    Button {
-                        newFolderName = ""
-                        showingCreateFolderAlert = true
-                    } label: {
-                        Label("Create Folder", systemImage: "plus.circle.fill")
-                    }
-                }
-            }
+            // ToolbarItem(placement: .navigationBarTrailing) {
+            //     if !isMultiSelectMode {
+            //         Button {
+            //             newFolderName = ""
+            //             showingCreateFolderAlert = true
+            //         } label: {
+            //             Label("Create Folder", systemImage: "plus.circle.fill")
+            //                 .font(.system(size: 24, weight: .bold))
+            //         }
+            //     }
+            // }
             
             ToolbarItem(placement: .navigationBarTrailing) {
                 if isMultiSelectMode && !selectedFiles.isEmpty {
