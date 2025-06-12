@@ -104,10 +104,14 @@ struct DocumentReviewView: View {
                         Text("Title")
                             .font(.headline)
                             .foregroundColor(.secondary)
-                        
                         TextField("Document Title", text: $editedTitle)
-                            .textFieldStyle(.roundedBorder)
-                            .padding(.horizontal, 4)
+                            .padding(12)
+                            .background(Color(.systemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                            )
                     }
                     .padding(.horizontal)
                     
@@ -334,19 +338,17 @@ struct DocumentReviewView: View {
             }
             .onAppear {
                 if let suggestedFolderPath = document.suggestedFolder {
-                    let folderNames = suggestedFolderPath.split(separator: "/")
-                    if let firstFolderName = folderNames.first {
-                        if let rootFolder = folders.first(where: { $0.name == String(firstFolderName) && $0.parent == nil }) {
-                            var currentFolder = rootFolder
-                            for folderName in folderNames.dropFirst() {
-                                if let nextFolder = currentFolder.subfolders.first(where: { $0.name == String(folderName) }) {
-                                    currentFolder = nextFolder
-                                } else {
-                                    break
-                                }
-                            }
-                            selectedFolder = currentFolder
-                        }
+                    let targetPath = suggestedFolderPath.split(separator: "/").map(String.init)
+                    
+                    let allFolders = folders
+                    
+                    let targetFolder = allFolders.first { folder in
+                        let folderPath = folder.getPath().map { $0.name }
+                        return folderPath == targetPath
+                    }
+                    
+                    if let targetFolder {
+                        self.selectedFolder = targetFolder
                     }
                 }
             }
@@ -451,4 +453,4 @@ struct DocumentReviewView: View {
         isSaving = false
         dismiss()
     }
-} 
+}

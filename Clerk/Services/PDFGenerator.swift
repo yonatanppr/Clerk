@@ -1,5 +1,6 @@
 import UIKit
 import SwiftData
+import PDFKit
 
 struct PDFGenerator {
     static func generatePDF(from images: [UIImage], fileName: String, parent: FolderItem?, modelContext: ModelContext) {
@@ -38,4 +39,27 @@ struct PDFGenerator {
             print("Failed to save file: \(error.localizedDescription)")
         }
     }
-} 
+
+    static func pdfToImages(url: URL) -> [UIImage]? {
+        guard let pdfDocument = PDFDocument(url: url) else {
+            print("Could not create PDFDocument from URL.")
+            return nil
+        }
+
+        var images: [UIImage] = []
+        for i in 0..<pdfDocument.pageCount {
+            guard let page = pdfDocument.page(at: i) else { continue }
+            let pageRect = page.bounds(for: .mediaBox)
+            let renderer = UIGraphicsImageRenderer(size: pageRect.size)
+            let image = renderer.image { ctx in
+                UIColor.white.set()
+                ctx.fill(pageRect)
+                ctx.cgContext.translateBy(x: 0.0, y: pageRect.size.height)
+                ctx.cgContext.scaleBy(x: 1.0, y: -1.0)
+                page.draw(with: .mediaBox, to: ctx.cgContext)
+            }
+            images.append(image)
+        }
+        return images
+    }
+}
