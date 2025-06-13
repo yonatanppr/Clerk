@@ -7,10 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2D77E0A12DFB6D0D00DC41FB /* ClerkShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2D77E0972DFB6D0D00DC41FB /* ClerkShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2DA550672DF36F5400C1AC0C /* DocumentScannerView in Frameworks */ = {isa = PBXBuildFile; productRef = 2DA550662DF36F5400C1AC0C /* DocumentScannerView */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		2D77E09F2DFB6D0D00DC41FB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2D7A83202DECA6E0004319F8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2D77E0962DFB6D0D00DC41FB;
+			remoteInfo = ClerkShareExtension;
+		};
 		2D7A83362DECA6E1004319F8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 2D7A83202DECA6E0004319F8 /* Project object */;
@@ -27,13 +35,35 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		2D77E0A62DFB6D0D00DC41FB /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2D77E0A12DFB6D0D00DC41FB /* ClerkShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		2D77E0972DFB6D0D00DC41FB /* ClerkShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ClerkShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D7A83282DECA6E0004319F8 /* Clerk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clerk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D7A83352DECA6E1004319F8 /* ClerkTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClerkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D7A833F2DECA6E1004319F8 /* ClerkUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClerkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		2D77E0A52DFB6D0D00DC41FB /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2D77E0962DFB6D0D00DC41FB /* ClerkShareExtension */;
+		};
 		2D9D7CBA2DF89D6000DB0E5B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -44,12 +74,20 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		2D77E0982DFB6D0D00DC41FB /* ClerkShareExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2D77E0A52DFB6D0D00DC41FB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ClerkShareExtension; sourceTree = "<group>"; };
 		2D9D7C892DF89D4E00DB0E5B /* ClerkUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ClerkUITests; sourceTree = "<group>"; };
 		2D9D7C902DF89D5000DB0E5B /* ClerkTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ClerkTests; sourceTree = "<group>"; };
 		2D9D7CA92DF89D6000DB0E5B /* Clerk */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (2D9D7CBA2DF89D6000DB0E5B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Clerk; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		2D77E0942DFB6D0D00DC41FB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2D7A83252DECA6E0004319F8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -81,6 +119,7 @@
 				2D9D7CA92DF89D6000DB0E5B /* Clerk */,
 				2D9D7C902DF89D5000DB0E5B /* ClerkTests */,
 				2D9D7C892DF89D4E00DB0E5B /* ClerkUITests */,
+				2D77E0982DFB6D0D00DC41FB /* ClerkShareExtension */,
 				2D7A83292DECA6E0004319F8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -91,6 +130,7 @@
 				2D7A83282DECA6E0004319F8 /* Clerk.app */,
 				2D7A83352DECA6E1004319F8 /* ClerkTests.xctest */,
 				2D7A833F2DECA6E1004319F8 /* ClerkUITests.xctest */,
+				2D77E0972DFB6D0D00DC41FB /* ClerkShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -98,6 +138,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		2D77E0962DFB6D0D00DC41FB /* ClerkShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2D77E0A22DFB6D0D00DC41FB /* Build configuration list for PBXNativeTarget "ClerkShareExtension" */;
+			buildPhases = (
+				2D77E0932DFB6D0D00DC41FB /* Sources */,
+				2D77E0942DFB6D0D00DC41FB /* Frameworks */,
+				2D77E0952DFB6D0D00DC41FB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2D77E0982DFB6D0D00DC41FB /* ClerkShareExtension */,
+			);
+			name = ClerkShareExtension;
+			packageProductDependencies = (
+			);
+			productName = ClerkShareExtension;
+			productReference = 2D77E0972DFB6D0D00DC41FB /* ClerkShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		2D7A83272DECA6E0004319F8 /* Clerk */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2D7A83492DECA6E1004319F8 /* Build configuration list for PBXNativeTarget "Clerk" */;
@@ -105,10 +167,12 @@
 				2D7A83242DECA6E0004319F8 /* Sources */,
 				2D7A83252DECA6E0004319F8 /* Frameworks */,
 				2D7A83262DECA6E0004319F8 /* Resources */,
+				2D77E0A62DFB6D0D00DC41FB /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				2D77E0A02DFB6D0D00DC41FB /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				2D9D7CA92DF89D6000DB0E5B /* Clerk */,
@@ -174,9 +238,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1630;
+				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
+					2D77E0962DFB6D0D00DC41FB = {
+						CreatedOnToolsVersion = 16.4;
+					};
 					2D7A83272DECA6E0004319F8 = {
 						CreatedOnToolsVersion = 16.3;
 					};
@@ -209,11 +276,19 @@
 				2D7A83272DECA6E0004319F8 /* Clerk */,
 				2D7A83342DECA6E1004319F8 /* ClerkTests */,
 				2D7A833E2DECA6E1004319F8 /* ClerkUITests */,
+				2D77E0962DFB6D0D00DC41FB /* ClerkShareExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2D77E0952DFB6D0D00DC41FB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2D7A83262DECA6E0004319F8 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -238,6 +313,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2D77E0932DFB6D0D00DC41FB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2D7A83242DECA6E0004319F8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -262,6 +344,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		2D77E0A02DFB6D0D00DC41FB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2D77E0962DFB6D0D00DC41FB /* ClerkShareExtension */;
+			targetProxy = 2D77E09F2DFB6D0D00DC41FB /* PBXContainerItemProxy */;
+		};
 		2D7A83372DECA6E1004319F8 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 2D7A83272DECA6E0004319F8 /* Clerk */;
@@ -275,6 +362,60 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		2D77E0A32DFB6D0D00DC41FB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ClerkShareExtension/ClerkShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = BL9H4P7BNG;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ClerkShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ClerkShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = clerkapp.Clerk.ClerkShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2D77E0A42DFB6D0D00DC41FB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ClerkShareExtension/ClerkShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = BL9H4P7BNG;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ClerkShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ClerkShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = clerkapp.Clerk.ClerkShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		2D7A83472DECA6E1004319F8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -402,6 +543,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Clerk/Clerk.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = BL9H4P7BNG;
@@ -432,6 +574,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Clerk/Clerk.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = BL9H4P7BNG;
@@ -532,6 +675,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2D77E0A22DFB6D0D00DC41FB /* Build configuration list for PBXNativeTarget "ClerkShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2D77E0A32DFB6D0D00DC41FB /* Debug */,
+				2D77E0A42DFB6D0D00DC41FB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		2D7A83232DECA6E0004319F8 /* Build configuration list for PBXProject "Clerk" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
