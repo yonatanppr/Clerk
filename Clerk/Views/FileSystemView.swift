@@ -233,6 +233,14 @@ struct FileSystemView: View {
                 .ignoresSafeArea(.keyboard)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .didReceiveFile)) { notification in
+            if let fileURL = notification.object as? URL {
+                if let data = try? Data(contentsOf: fileURL), let image = UIImage(data: data) {
+                    processImages([image])
+                    try? FileManager.default.removeItem(at: fileURL)
+                }
+            }
+        }
         .navigationTitle(currentFolder?.name ?? "Clerk")
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {

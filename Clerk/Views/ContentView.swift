@@ -1,15 +1,28 @@
 import SwiftUI
+// In ContentView.swift
 
 struct ContentView: View {
-    // 1. Add a @State variable for the NavigationPath
     @State private var navigationPath = NavigationPath()
+    // Add this new state variable
+    @State private var showTestAlert = false
 
     var body: some View {
-        NavigationStack(path: $navigationPath) { // 2. Use the path in NavigationStack
-            FileSystemView(currentFolder: nil, navigationPath: $navigationPath) // 3. Pass the binding to the initial view
+        NavigationStack(path: $navigationPath) {
+            FileSystemView(currentFolder: nil, navigationPath: $navigationPath)
                 .navigationDestination(for: FolderItem.self) { folder in
                     FileSystemView(currentFolder: folder, navigationPath: $navigationPath)
                 }
+        }
+        // Add these two modifiers
+        .onOpenURL { url in
+            if url.host == "test" {
+                self.showTestAlert = true
+            }
+        }
+        .alert("Test Successful!", isPresented: $showTestAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("The main app was successfully opened by the simplified test extension.")
         }
     }
 }
