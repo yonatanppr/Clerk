@@ -5,7 +5,6 @@ enum LLMError: Error, LocalizedError {
     case invalidResponse
     case networkError(Error)
     case processingError
-    case missingAPIKey
     case apiError(String)
     
     var errorDescription: String? {
@@ -16,8 +15,6 @@ enum LLMError: Error, LocalizedError {
             return "Network error: \(error.localizedDescription)"
         case .processingError:
             return "Error processing document"
-        case .missingAPIKey:
-            return "API key is missing"
         case .apiError(let message):
             return "API error: \(message)"
         }
@@ -25,16 +22,6 @@ enum LLMError: Error, LocalizedError {
 }
 
 struct LLMService {
-    private static let apiKey: String = {
-        guard
-            let path = Bundle.main.path(forResource: "Secrets", ofType: "plist"),
-            let dict = NSDictionary(contentsOfFile: path),
-            let key = dict["OPENROUTER_API_KEY"] as? String
-        else {
-            fatalError("API key not found in Secrets.plist")
-        }
-        return key
-    }()
     
     // MARK: - Request Models (Codable)
     private struct OpenRouterChatRequest: Codable {
@@ -153,7 +140,6 @@ struct LLMService {
         var request = URLRequest(url: apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("Clerk/1.0", forHTTPHeaderField: "HTTP-Referer")
         
         do {
