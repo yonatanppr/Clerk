@@ -29,9 +29,6 @@ DerivedData/
 .idea/
 *.xcsettings
 
-# Secrets
-Secrets.plist
-
 # Build output
 build/
 Build/
