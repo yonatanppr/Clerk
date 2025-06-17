@@ -237,6 +237,151 @@ struct LLMService {
             throw LLMError.networkError(error)
         }
     }
+
+    static func analyzeDocument(text: String, existingFolders: [FolderItem]) async throws -> (summary: String, title: String, folderSuggestion: FolderSuggestion, documentType: ScannedDocument.DocumentType, requiredAction: ScannedDocument.RequiredAction?) {
+        let apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
+
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw LLMError.processingError
+        }
+
+        let folderStructure = existingFolders.map { folder -> String in
+            let path = folder.getPath().map { $0.name }.joined(separator: "/")
+            return path
+        }.joined(separator: "\n")
+
+        let prompt = """
+        Analyze the following document text and provide:
+        1. A concise summary of the content
+        2. A suitable title for the document
+        3. A suggestion for where to store this document based on the existing folder structure
+        4. The type of document (spam, informational, or action_required)
+        5. If action is required, provide details about the action
+
+        Current folder structure:
+        \(folderStructure)
+
+        If you find a suitable existing folder, suggest it. If no existing folder is appropriate, suggest creating a new one with a descriptive name.
+
+        For action detection:
+        - If the document is spam or an advertisement with no required action, set documentType to "spam"
+        - If the document contains important information but no required action, set documentType to "informational"
+        - If the document requires any action (payment, form submission, appointment, etc.), set documentType to "action_required" and provide action details
+
+        Format your response as JSON with these fields:
+        {
+            "summary": "your short summary here",
+            "title": "your title here",
+            "suggestedFolder": "path/to/existing/folder or null if no suitable folder",
+            "shouldCreateNewFolder": true/false,
+            "newFolderName": "suggested new folder name or null if not creating new folder",
+            "documentType": "spam/informational/action_required",
+            "requiredAction": {
+                "actionType": "payment/form/appointment/other",
+                "description": "short description of the required action",
+                "dueDate": "YYYY-MM-DD or null if no due date",
+                "priority": "high/medium/low"
+            } or null if no action required
+        }
+
+        Document text:
+        \(text)
+        """
+
+        let requestMessages = [OpenRouterChatRequest.RequestMessage(role: "user", content: [OpenRouterChatRequest.ContentPart(text: prompt)])]
+
+        let modelIdentifier = "google/gemma-3-27b-it:free"
+
+        let openRouterRequestBody = OpenRouterChatRequest(
+            model: modelIdentifier,
+            messages: requestMessages,
+            max_tokens: 1500
+        )
+
+        var request = URLRequest(url: apiURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Clerk/1.0", forHTTPHeaderField: "HTTP-Referer")
+
+        do {
+            request.httpBody = try JSONEncoder().encode(openRouterRequestBody)
+        } catch {
+            print("Error serializing request body: \(error)")
+            throw LLMError.processingError
+        }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            if let httpResponse = response as? HTTPURLResponse {
+                print("HTTP Status Code: \(httpResponse.statusCode)")
+            }
+
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("Response: \(responseString)")
+            }
+
+            if let httpResponse = response as? HTTPURLResponse,
+               !(200...299).contains(httpResponse.statusCode) {
+                if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
+                    throw LLMError.apiError(errorResponse.error.message)
+                }
+                throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
+            }
+
+            let openRouterResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
+
+            guard var content = openRouterResponse.choices.first?.message.content else {
+                print("LLM response content is nil or empty.")
+                throw LLMError.invalidResponse
+            }
+
+            if content.hasPrefix("```json\n") {
+                content = String(content.dropFirst("```json\n".count))
+            }
+            if content.hasSuffix("\n```") {
+                content = String(content.dropLast("\n```".count))
+            }
+
+            guard let jsonData = content.data(using: .utf8),
+                  let llmResponse = try? JSONDecoder().decode(LLMResponse.self, from: jsonData) else {
+                print("Failed to parse LLM response content: \(openRouterResponse.choices.first?.message.content ?? "nil")")
+                throw LLMError.invalidResponse
+            }
+
+            let folderSuggestion = FolderSuggestion(
+                suggestedFolder: llmResponse.suggestedFolder,
+                shouldCreateNewFolder: llmResponse.shouldCreateNewFolder,
+                newFolderName: llmResponse.newFolderName
+            )
+
+            let documentType = ScannedDocument.DocumentType(rawValue: llmResponse.documentType) ?? .unknown
+
+            let requiredAction: ScannedDocument.RequiredAction?
+            if let action = llmResponse.requiredAction {
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd"
+                let dueDate = action.dueDate.flatMap { dateFormatter.date(from: $0) }
+
+                requiredAction = ScannedDocument.RequiredAction(
+                    actionType: ScannedDocument.RequiredAction.ActionType(rawValue: action.actionType) ?? .other,
+                    description: action.description,
+                    dueDate: dueDate,
+                    priority: ScannedDocument.RequiredAction.Priority(rawValue: action.priority) ?? .medium
+                )
+            } else {
+                requiredAction = nil
+            }
+
+            return (llmResponse.summary, llmResponse.title, folderSuggestion, documentType, requiredAction)
+        } catch let error as LLMError {
+            throw error
+        } catch {
+            print("Unexpected error: \(error)")
+            throw LLMError.networkError(error)
+        }
+    }
 }
 
 // Response models

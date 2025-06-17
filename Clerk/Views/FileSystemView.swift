@@ -5,6 +5,8 @@ import DocumentScannerView
 import QuickLook
 import UniformTypeIdentifiers
 import PhotosUI
+import Vision
+
 
 class DragState: ObservableObject {
     @Published var isDraggingOver = false
@@ -419,8 +421,9 @@ struct FileSystemView: View {
             isProcessingDocument = true
             let document = ScannedDocument(images: images)
             currentDocument = document
-            
+
             do {
+                let recognizedText = try OCRService.recognizeText(from: images)
                 let allFolders = (try? modelContext.fetch(FetchDescriptor<FolderItem>())) ?? []
                 let (summary, title, folderSuggestion, documentType, requiredAction) = try await LocalLLMService.analyzeDocument(
                     images: images,
