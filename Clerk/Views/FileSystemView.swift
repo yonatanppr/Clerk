@@ -425,8 +425,8 @@ struct FileSystemView: View {
             do {
                 let recognizedText = try OCRService.recognizeText(from: images)
                 let allFolders = (try? modelContext.fetch(FetchDescriptor<FolderItem>())) ?? []
-                let (summary, title, folderSuggestion, documentType, requiredAction) = try await LLMService.analyzeDocument(
-                    text: recognizedText,
+                let (summary, title, folderSuggestion, documentType, requiredAction) = try await LocalLLMService.analyzeDocument(
+                    images: images,
                     existingFolders: allFolders
                 )
                 document.llmSummary = summary
