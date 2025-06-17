@@ -422,7 +422,7 @@ struct FileSystemView: View {
             
             do {
                 let allFolders = (try? modelContext.fetch(FetchDescriptor<FolderItem>())) ?? []
-                let (summary, title, folderSuggestion, documentType, requiredAction) = try await LLMService.analyzeDocument(
+                let (summary, title, folderSuggestion, documentType, requiredAction) = try await LocalLLMService.analyzeDocument(
                     images: images,
                     existingFolders: allFolders
                 )
