@@ -102,7 +102,8 @@ struct LLMService {
         You are a document‑understanding assistant running entirely on‑device.
 
         The scanned document’s OCR text is between ``` fences.
-        The current folder hierarchy is between ~~~.
+        The current folder hierarchy is between ~~~. If you find a suitable existing folder, suggest it. 
+        If no existing folder is appropriate, suggest creating a new one with a descriptive name.
 
         Generate a JSON object with:
           • summary
@@ -112,6 +113,28 @@ struct LLMService {
           • newFolderName
           • documentType  (spam | informational | action_required)
           • requiredAction (object or null)
+        
+        For action detection:
+        - If the document is spam or an advertisement with no required action, set documentType to "spam"
+        - If the document contains important information but no required action, set documentType to "informational"
+        - If the document requires any action (payment, form submission, appointment, etc.), set documentType to "action_required" and provide action details
+                
+        
+        Format your response as JSON with these fields:
+        {
+            "summary": "your short summary here",
+            "title": "your title here",
+            "suggestedFolder": "path/to/existing/folder or null if no suitable folder",
+            "shouldCreateNewFolder": true/false,
+            "newFolderName": "suggested new folder name or null if not creating new folder",
+            "documentType": "spam/informational/action_required",
+            "requiredAction": {
+                        "actionType": "payment/form/appointment/other",
+                        "description": "short description of the required action",
+                        "dueDate": "YYYY-MM-DD or null if no due date",
+                        "priority": "high/medium/low"
+            } or null if no action required
+        }
 
         ```
         \(ocrText)
