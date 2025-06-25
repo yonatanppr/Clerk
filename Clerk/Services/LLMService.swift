@@ -1,267 +1,182 @@
 import Foundation
 import UIKit
+import Vision
+#if canImport(FoundationModels)
+import FoundationModels
+#endif
 
+// MARK: - Errors
 enum LLMError: Error, LocalizedError {
     case invalidResponse
-    case networkError(Error)
+    case networkError(Error)      // kept for compatibility with calling sites
     case processingError
-    case missingAPIKey
-    case apiError(String)
+    case modelNotLoaded
+    case parsingError(String)
     
     var errorDescription: String? {
         switch self {
         case .invalidResponse:
-            return "Invalid response from LLM service"
+            return "Invalid response from local LLM"
         case .networkError(let error):
             return "Network error: \(error.localizedDescription)"
         case .processingError:
             return "Error processing document"
-        case .missingAPIKey:
-            return "API key is missing"
-        case .apiError(let message):
-            return "API error: \(message)"
+        case .modelNotLoaded:
+            return "Local LLM model could not be loaded"
+        case .parsingError(let details):
+            return "Failed to parse LLM output: \(details)"
         }
     }
 }
 
+// MARK: - Service
 struct LLMService {
-    private static let apiKey: String = {
-        guard
-            let path = Bundle.main.path(forResource: "Secrets", ofType: "plist"),
-            let dict = NSDictionary(contentsOfFile: path),
-            let key = dict["OPENROUTER_API_KEY"] as? String
-        else {
-            fatalError("API key not found in Secrets.plist")
-        }
-        return key
-    }()
     
-    // MARK: - Request Models (Codable)
-    private struct OpenRouterChatRequest: Codable {
-        let model: String
-        let messages: [RequestMessage]
-        let max_tokens: Int?
-        // let temperature: Double? // Optional
-        // let stream: Bool?      // Optional
+    // MARK: Private helpers
 
-        struct RequestMessage: Codable {
-            let role: String
-            let content: [ContentPart] // Array to hold text and image parts
+    // MARK: - Local LLM helpers
+    #if canImport(FoundationModels)
+    @available(iOS 18.0, *)
+    private static let languageModel: SystemLanguageModel = .default
+
+    @available(iOS 18.0, *)
+    private static func generateCompletion(for prompt: String, maxTokens: Int) throws -> String {
+        // Ensure the model is actually available on this device / region.
+        guard languageModel.availability == .available else {
+            throw LLMError.modelNotLoaded
         }
+        var config = LanguageModelSession.Configuration()
+        config.maxTokens = maxTokens
 
-        // This structure matches the [String: Any] you were building.
-        // Ensure this is what 'google/gemma-3-27b-it:free' expects via OpenRouter.
-        struct ContentPart: Codable {
-            let type: String
-            let text: String?
-            let image_url: ImageUrlDetail? // Matches your existing "image_url" key within an "image" type part
-
-            // Initializer for text part
-            init(type: String = "text", text: String) {
-                self.type = type
-                self.text = text
-                self.image_url = nil
-            }
-            // Initializer for image part
-            // The 'type' here should be "image_url" as per the provided documentation
-            init(type: String = "image_url", imageUrl: ImageUrlDetail) {
-                self.type = type
-                self.text = nil
-                self.image_url = imageUrl
-            }
-
+        let session = try languageModel.makeSession(configuration: config)
+        let response = try session.respond(to: prompt, generating: String.self)
+        return response.content
+    }
+    #else
+    /// Fallback that simply throws on older SDKs where FoundationModels isn't available.
+    private static func generateCompletion(for prompt: String, maxTokens: Int) throws -> String {
+        throw LLMError.modelNotLoaded
+    }
+    #endif
+    
+    /// Vision OCR
+    private static func recognizeText(in images: [UIImage]) async throws -> String {
+        var accumulated = ""
+        for image in images {
+            guard let cg = image.cgImage else { continue }
+            let request = VNRecognizeTextRequest()
+            request.recognitionLevel = .accurate
+            let handler = VNImageRequestHandler(cgImage: cg)
+            try handler.perform([request])
+            let text = request.results?
+                .compactMap { ($0 as? VNRecognizedTextObservation)?
+                    .topCandidates(1).first?.string }
+                .joined(separator: "\n") ?? ""
+            accumulated += text + "\n"
         }
-        struct ImageUrlDetail: Codable {
-            let url: String
-        }
+        return accumulated
     }
     
-    static func analyzeDocument(images: [UIImage], existingFolders: [FolderItem]) async throws -> (summary: String, title: String, folderSuggestion: FolderSuggestion, documentType: ScannedDocument.DocumentType, requiredAction: ScannedDocument.RequiredAction?) {
-        let apiURL = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
+    // MARK: Public API
+    static func analyzeDocument(
+        images: [UIImage],
+        existingFolders: [FolderItem]
+    ) async throws -> (
+        summary: String,
+        title: String,
+        folderSuggestion: FolderSuggestion,
+        documentType: ScannedDocument.DocumentType,
+        requiredAction: ScannedDocument.RequiredAction?
+    ) {
         
-        // Convert images to base64 strings
-        let imageData = images.compactMap { image -> String? in
-            guard let data = image.jpegData(compressionQuality: 0.7) else { return nil }
-            return data.base64EncodedString()
-        }
+        // 1. OCR
+        let ocrText = try await recognizeText(in: images)
+        guard !ocrText.isEmpty else { throw LLMError.processingError }
         
-        guard !imageData.isEmpty else {
-            throw LLMError.processingError
-        }
+        // 2. Build prompt
+        let folderStructure = existingFolders
+            .map { $0.getPath().map(\.name).joined(separator: "/") }
+            .joined(separator: "\n")
         
-        // Create a string representation of the folder structure
-        let folderStructure = existingFolders.map { folder -> String in
-            let path = folder.getPath().map { $0.name }.joined(separator: "/")
-            return path
-        }.joined(separator: "\n")
-        
-        // Prepare the prompt for the LLM
         let prompt = """
-        Analyze these document images and provide:
-        1. A concise summary of the content
-        2. A suitable title for the document
-        3. A suggestion for where to store this document based on the existing folder structure
-        4. The type of document (spam, informational, or action_required)
-        5. If action is required, provide details about the action
+        You are a document‑understanding assistant running entirely on‑device.
 
-        Current folder structure:
+        The scanned document’s OCR text is between ``` fences.
+        The current folder hierarchy is between ~~~.
+
+        Generate a JSON object with:
+          • summary
+          • title
+          • suggestedFolder
+          • shouldCreateNewFolder
+          • newFolderName
+          • documentType  (spam | informational | action_required)
+          • requiredAction (object or null)
+
+        ```
+        \(ocrText)
+        ```
+        ~~~
         \(folderStructure)
-        
-        If you find a suitable existing folder, suggest it. If no existing folder is appropriate, suggest creating a new one with a descriptive name.
-        
-        For action detection:
-        - If the document is spam or an advertisement with no required action, set documentType to "spam"
-        - If the document contains important information but no required action, set documentType to "informational"
-        - If the document requires any action (payment, form submission, appointment, etc.), set documentType to "action_required" and provide action details
-        
-        Format your response as JSON with these fields:
-        {
-            "summary": "your short summary here",
-            "title": "your title here",
-            "suggestedFolder": "path/to/existing/folder or null if no suitable folder",
-            "shouldCreateNewFolder": true/false,
-            "newFolderName": "suggested new folder name or null if not creating new folder",
-            "documentType": "spam/informational/action_required",
-            "requiredAction": {
-                "actionType": "payment/form/appointment/other",
-                "description": "short description of the required action",
-                "dueDate": "YYYY-MM-DD or null if no due date",
-                "priority": "high/medium/low"
-            } or null if no action required
-        }
+        ~~~
         """
         
-        // --- Prepare request body using Codable structs ---
-        var contentParts: [OpenRouterChatRequest.ContentPart] = []
-        contentParts.append(OpenRouterChatRequest.ContentPart(text: prompt)) // Text part
-        
-        for base64ImageString in imageData {
-            let imageUrlDetail = OpenRouterChatRequest.ImageUrlDetail(url: "data:image/jpeg;base64,\(base64ImageString)")
-            contentParts.append(OpenRouterChatRequest.ContentPart(type: "image_url", imageUrl: imageUrlDetail))
+        // 3. Local inference
+        let raw: String
+        print("OS:", ProcessInfo.processInfo.operatingSystemVersion)
+        if #available(iOS 18.0, *) {
+            raw = try generateCompletion(for: prompt, maxTokens: 768)
+        } else {
+            throw LLMError.modelNotLoaded
         }
         
-        let requestMessages = [OpenRouterChatRequest.RequestMessage(role: "user", content: contentParts)]
+        // 4. Clean & parse
+        let cleaned = raw
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
         
-        let modelIdentifier = "google/gemma-3-27b-it:free"
-
-        let openRouterRequestBody = OpenRouterChatRequest(
-            model: modelIdentifier,
-            messages: requestMessages,
-            max_tokens: 1500 // Increased token limit for more detailed response
+        guard let jsonData = cleaned.data(using: .utf8) else {
+            throw LLMError.invalidResponse
+        }
+        
+        let llmResponse: LLMResponse
+        do {
+            llmResponse = try JSONDecoder().decode(LLMResponse.self, from: jsonData)
+        } catch {
+            throw LLMError.parsingError(cleaned)
+        }
+        
+        // 5. Convert to app types
+        let folderSuggestion = FolderSuggestion(
+            suggestedFolder: llmResponse.suggestedFolder,
+            shouldCreateNewFolder: llmResponse.shouldCreateNewFolder,
+            newFolderName: llmResponse.newFolderName
         )
         
-        var request = URLRequest(url: apiURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("Clerk/1.0", forHTTPHeaderField: "HTTP-Referer")
+        let documentType = ScannedDocument.DocumentType(rawValue: llmResponse.documentType) ?? .unknown
         
-        do {
-            request.httpBody = try JSONEncoder().encode(openRouterRequestBody)
-        } catch {
-            print("Error serializing request body: \(error)")
-            throw LLMError.processingError
-        }
-        
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+        let requiredAction: ScannedDocument.RequiredAction?
+        if let action = llmResponse.requiredAction {
+            let df = DateFormatter()
+            df.dateFormat = "yyyy-MM-dd"
+            let dueDate = action.dueDate.flatMap { df.date(from: $0) }
             
-            if let httpResponse = response as? HTTPURLResponse {
-                print("HTTP Status Code: \(httpResponse.statusCode)")
-            }
-            
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("Response: \(responseString)")
-            }
-            
-            if let httpResponse = response as? HTTPURLResponse,
-               !(200...299).contains(httpResponse.statusCode) {
-                if let errorResponse = try? JSONDecoder().decode(OpenRouterErrorResponse.self, from: data) {
-                    throw LLMError.apiError(errorResponse.error.message)
-                }
-                throw LLMError.apiError("HTTP \(httpResponse.statusCode)")
-            }
-            
-            let openRouterResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
-            
-            guard var content = openRouterResponse.choices.first?.message.content else {
-                print("LLM response content is nil or empty.")
-                throw LLMError.invalidResponse
-            }
-            
-            // Strip markdown code block delimiters if present
-            if content.hasPrefix("```json\n") {
-                content = String(content.dropFirst("```json\n".count))
-            }
-            if content.hasSuffix("\n```") {
-                content = String(content.dropLast("\n```".count))
-            }
-            
-            guard let jsonData = content.data(using: .utf8),
-                  let llmResponse = try? JSONDecoder().decode(LLMResponse.self, from: jsonData) else {
-                print("Failed to parse LLM response content: \(openRouterResponse.choices.first?.message.content ?? "nil")")
-                throw LLMError.invalidResponse
-            }
-            
-            let folderSuggestion = FolderSuggestion(
-                suggestedFolder: llmResponse.suggestedFolder,
-                shouldCreateNewFolder: llmResponse.shouldCreateNewFolder,
-                newFolderName: llmResponse.newFolderName
+            requiredAction = ScannedDocument.RequiredAction(
+                actionType: ScannedDocument.RequiredAction.ActionType(rawValue: action.actionType) ?? .other,
+                description: action.description,
+                dueDate: dueDate,
+                priority: ScannedDocument.RequiredAction.Priority(rawValue: action.priority) ?? .medium
             )
-            
-            // Convert document type
-            let documentType = ScannedDocument.DocumentType(rawValue: llmResponse.documentType) ?? .unknown
-            
-            // Convert required action if present
-            let requiredAction: ScannedDocument.RequiredAction?
-            if let action = llmResponse.requiredAction {
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd"
-                let dueDate = action.dueDate.flatMap { dateFormatter.date(from: $0) }
-                
-                requiredAction = ScannedDocument.RequiredAction(
-                    actionType: ScannedDocument.RequiredAction.ActionType(rawValue: action.actionType) ?? .other,
-                    description: action.description,
-                    dueDate: dueDate,
-                    priority: ScannedDocument.RequiredAction.Priority(rawValue: action.priority) ?? .medium
-                )
-            } else {
-                requiredAction = nil
-            }
-            
-            return (llmResponse.summary, llmResponse.title, folderSuggestion, documentType, requiredAction)
-        } catch let error as LLMError {
-            throw error
-        } catch {
-            print("Unexpected error: \(error)")
-            throw LLMError.networkError(error)
+        } else {
+            requiredAction = nil
         }
+        
+        return (llmResponse.summary, llmResponse.title, folderSuggestion, documentType, requiredAction)
     }
 }
 
-// Response models
-private struct OpenRouterResponse: Codable {
-    let choices: [Choice]
-    
-    struct Choice: Codable {
-        let message: Message
-    }
-    
-    struct Message: Codable {
-        let content: String
-    }
-}
-
-private struct OpenRouterErrorResponse: Codable {
-    let error: Error
-    
-    struct Error: Codable {
-        let message: String
-        let type: String?
-        let code: String?
-    }
-}
-
+// MARK: - Response models
 private struct LLMResponse: Codable {
     let summary: String
     let title: String
